@@ -1,0 +1,30 @@
+[project]
+name = "greenfjord"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "cartopy>=0.25.0",
+    "contextily>=1.7.1",
+    "copernicusmarine>=2.4.1",
+    "geopandas>=1.1.4",
+    "h5netcdf>=1.8.1",
+    "h5py>=3.16.0",
+    "loguru>=0.7.3",
+    "matplotlib>=3.11.0",
+    "munch>=4.0.0",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.3",
+    "planetary-computer>=1.0.0",
+    "pystac-client>=0.9.0",
+    "python-dotenv>=1.2.2",
+    "rioxarray>=0.22.0",
+    "scipy>=1.18.0",
+    "stackstac>=0.5.0",
+    "zarr>=3.2.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

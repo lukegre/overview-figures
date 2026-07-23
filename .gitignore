@@ -11,7 +11,14 @@ wheels/
 .env
 
 **/.DS_Store
-**/*.nc
-**/*.prj
-**/*.gpkg
-**/*.tif
+*.nc
+*.prj
+*.gpkg
+*.tif
+*.dbf
+*.shp
+*.shx
+*.qix
+*.pdf
+*.cpg
+*.csv
