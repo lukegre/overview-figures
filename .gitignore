@@ -22,3 +22,13 @@ wheels/
 *.pdf
 *.cpg
 *.csv
+*.txt
+*.xlsx
+
+*ipynb
+
+*.aux*
+*.png
+*.pdf
+
+**/examples/domains.ipynb

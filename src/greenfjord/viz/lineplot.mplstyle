@@ -1,0 +1,12 @@
+figure.figsize: 7.6, 3.7
+figure.dpi: 120
+
+axes.spines.top: False
+axes.spines.right: False
+
+axes.titlelocation: left
+axes.titlesize: 10
+
+font.size: 9
+
+legend.frameon: True

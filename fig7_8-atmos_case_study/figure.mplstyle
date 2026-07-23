@@ -1,0 +1,33 @@
+# Shared style for the GreenFjord atmospheric case-study figures.
+# Applied by both plot_pm10_aai.py and plot_boxplot_piecharts.py so the two
+# panels share one look.
+
+font.family:        sans-serif
+font.sans-serif:    DejaVu Sans, Arial, Helvetica
+font.size:          10
+axes.labelsize:     medium
+axes.titlesize:     medium
+xtick.labelsize:    medium
+ytick.labelsize:    medium
+legend.fontsize:    medium
+
+axes.linewidth:     0.7
+lines.linewidth:    2.0
+axes.spines.top:    False
+axes.spines.right:  False
+axes.spines.bottom: True
+axes.edgecolor:     black
+axes.labelcolor:    black
+text.color:         black
+
+xtick.direction:    out
+ytick.direction:    out
+xtick.color:        black
+ytick.color:        black
+
+legend.frameon:     False
+
+figure.figsize:     7.5, 4.5
+figure.dpi:         100
+savefig.dpi:        200
+savefig.bbox:       tight

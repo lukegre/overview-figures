@@ -1,0 +1,88 @@
+# Configuration for plot_tidal_plain_figure.py
+# Tweak any value here and re-run:  uv run python plot_tidal_plain_figure.py
+
+data:
+  netcdf: data/landsat-rgb_and_tidal_flats-cleaned-1993-2024.nc
+  csv: data/area_tide_height_fit.csv
+
+output:
+  path: fig14-tidal_plain.png
+  dpi: 300
+  figsize: [ 10, 3.3 ] # width, height in inches
+
+# ---------------------------------------------------------------------------
+# Fetching Landsat scenes (via stac.py / Microsoft Planetary Computer)
+# For each map date we snap to the nearest date in the tidal-plain netCDF, then
+# download that scene's RGB (land background) + SWIR (water). Scenes are cached
+# in cache_dir, so this only hits the network the first time.
+# Set enabled: false to skip fetching and use the flat-colour fallback instead.
+# ---------------------------------------------------------------------------
+fetch:
+  enabled: true
+  bbox: [ -45.33165, 60.883190, -45.234146, 60.928097 ] # west, south, east, north
+  max_cloud_cover: 90 # permissive: the scene date is already known-good
+  cache_dir: data/landsat_scenes_fetched
+
+# ---------------------------------------------------------------------------
+# Panel (a): the two Landsat maps
+# Rendering follows 1.2_landsat_data.ipynb: RGB true-colour base (land) with the
+# SWIR field drawn over the ocean through a colormap (cividis -> dark-navy water,
+# yellow tidal flats), and the flats outlined with a contour.
+# ---------------------------------------------------------------------------
+maps:
+  # Dates of the two scenes. The nearest scene in the tidal-plain netCDF is used;
+  # the panel title shows the actual scene date selected.
+  # NB: 1998-08-20 is not in the cleaned netCDF, so 1999-08-20 is the nearest.
+  left_date: "2014-07-02"
+  right_date: "2014-07-11"
+
+  rgb_vmax: 0.3 # true-colour land stretch (reflectance, vmin = 0)
+  swir_cmap: cividis # water (low) -> tidal flats (high)
+  swir_vmin: 0.0
+  swir_vmax: 0.2
+
+  land_fallback_color: "#d9d4cc" # used only when fetch is disabled/unavailable
+  contour_color: "#e8790c" # outline colour around the tidal flats
+  contour_linewidth: 1
+
+  title_fontsize: medium
+  date_format: "%B %-d, %Y" # strftime format for the panel titles
+  panel_label_fontsize: medium # the "a" label
+
+# ---------------------------------------------------------------------------
+# Panel (b): normalised tidal-plain area vs. year, coloured by tide height
+# Reproduces 2.2_landsat_tide_plains-add_tide_info.ipynb (cell 21).
+# ---------------------------------------------------------------------------
+scatter:
+  cmap: cividis_r # colormap for the tide_height hue
+  marker_size: 30
+  marker_alpha: 0.9 # slight transparency eases the dense 2015-2024 cluster
+  edgecolor: k
+  edgewidth: 0.5
+
+  line_color: k # regression line
+  line_width: 1
+  ci: 99 # bootstrap confidence interval (%)
+  n_boot: 10000 # bootstrap resamples
+  band_color: "0.6" # confidence-band fill colour
+  band_alpha: 0.4
+  seed: 0 # RNG seed for reproducible bootstrap band
+
+  legend_title: Tide height [m]
+  legend_step: 0.5 # spacing of tide-height values shown in the legend
+
+  xlabel: Year
+  ylabel: "Normalised tidal plains area [km²]"
+  year0: 1995
+  tick_step_years: 5 # x-axis tick spacing
+  panel_label_fontsize: medium # the "b" label
+
+# ---------------------------------------------------------------------------
+# Layout
+# ---------------------------------------------------------------------------
+layout:
+  divider: false # vertical line between panels a and b
+  map_width_ratio: 1.0 # relative width of each map column
+  scatter_width_ratio: 1.25 # relative width of the scatter column
+  panel_gap_ratio: 0.22 # empty spacer column between the maps and the scatter
+  map_wspace: 0.04 # gap between the two maps (fraction of avg axes width)
