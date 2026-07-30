@@ -162,7 +162,6 @@ def get_overlays(mask):
 
 def _plot_ocean_region_map(da, **kwargs):
     import numpy as np
-
     from greenfjord_trends.viz.geo import plot_map
 
     da = da.where(lambda x: x > 0)

@@ -12,6 +12,9 @@ wheels/
 
 **/.DS_Store
 *.nc
+*.nc.*
+*.zarr
+*.zarr.*
 *.prj
 *.gpkg
 *.tif

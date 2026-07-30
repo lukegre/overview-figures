@@ -26,18 +26,41 @@ It reads the stats workbook and cached mask from `data/` and writes
 `data/regions_mask.nc`; delete it to force a rebuild from GEBCO bathymetry (needs
 the `greenfjord_trends` package and network/S3 access).
 
+## Line-plot version
+
+`plot_sst_t2m_trends_lines.py` is an annual time-series version based on
+`examples/line_plots.ipynb`. It plots annual regional means as solid lines,
+least-squares trends as dashed lines, and SST analysis-error bands. Statistically
+significant slopes (Spearman p < 0.05) are shown in bold; all slopes are labelled
+in °C per decade at the right-hand end of their corresponding lines.
+
+Run it from the repository root:
+
+```
+MPLCONFIGDIR="$TMPDIR/mpl" uv run python fig2-sst_t2m_trends/plot_sst_t2m_trends_lines.py
+```
+
+It reads the monthly SST and daily ERA5 Zarr stores in `data/` and writes
+`fig2-sst_t2m_trends_lines.png` and `fig2-sst_t2m_trends_lines.pdf`.
+
 ## Layout
 
 ```
 .
 ├── plot_sst_t2m_trends.py            # script that builds the figure (entry point)
+├── plot_sst_t2m_trends_lines.py      # annual line-plot version
 ├── fig2-sst_t2m_trends.png           # output figure
+├── fig2-sst_t2m_trends_lines.png     # line-plot output
+├── fig2-sst_t2m_trends_lines.pdf     # vector line-plot output
 ├── data/                             # input datasets
 │   ├── decade_distribution_stats.xlsx   # decadal SST & ERA5 stats (sheets SST, ERA5)
 │   ├── regions_mask.nc                  # cached regional mask (GEBCO-derived)
+│   ├── era5-daily-greenfjord.zarr        # daily ERA5 inputs for line plots
+│   ├── cmems_obs_...monthly.zarr         # monthly SST inputs for line plots
 │   └── fluxes_overviewpaper_tabulated.csv  # glacier flux table (not used by script)
 └── examples/                         # exploratory / superseded material
     ├── region_plots.ipynb               # original region-map + bar-plot notebook
+    ├── line_plots.ipynb                 # annual line/trend prototype
     ├── domains.ipynb                    # domain / SST-gradient exploration
     ├── distributions-figure.png         # earlier distribution figure
     └── regions-mask.pdf                 # earlier regional-mask export

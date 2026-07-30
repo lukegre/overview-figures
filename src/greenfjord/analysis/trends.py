@@ -1,8 +1,109 @@
 import numpy as np
 import scipy.stats
 import xarray as xr
+from scipy.stats import norm, theilslopes
 
 from .utils import _copy_xrattrs
+
+
+def lag1_coefficient(x):
+    """Lag-1 autocorrelation of a 1-D array, mean removed."""
+    x = x - x.mean()
+    return float((x[1:] * x[:-1]).sum() / (x**2).sum())
+
+
+def _tfpw_1d(y, only_if_significant=True, alpha=0.05):
+    """Trend-free prewhitening of one series (Yue et al. 2002, Hydrol. Process. 16, 1807).
+
+    1. slope of the Theil-Sen line on the original series
+    2. detrend, so the AR coefficient is not inflated by the trend
+    3. lag-1 AR coefficient from the residuals
+    4. prewhiten the residuals and add the *original* trend back
+
+    Step 4 is what makes it "trend-free": the trend bypasses the AR filter, so it
+    is not attenuated the way plain prewhitening attenuates it.
+
+    The first value is consumed by the AR(1) filter and comes back as NaN, so the
+    output keeps the shape of the input. Series whose rho1 does not clear the
+    Anderson (1942) one-sided bound are returned unchanged -- prewhitening with a
+    rho1 that is mostly estimation noise costs power for nothing.
+    """
+    out = np.full(y.shape, np.nan, dtype="float64")
+    finite = np.isfinite(y)
+    if finite.sum() < 4:
+        return out
+
+    index = np.flatnonzero(finite)
+    t = index.astype("float64")
+    y_ok = y[finite]
+
+    slope = theilslopes(y_ok, t)[0]
+    resid = y_ok - slope * t
+    rho = lag1_coefficient(resid)
+
+    n = resid.size
+    bound = (-1 + norm.ppf(1 - alpha) * np.sqrt(n - 2)) / (n - 1)
+    if only_if_significant and rho <= bound:
+        out[index] = y_ok
+        return out
+
+    rho = float(np.clip(rho, 0.0, 0.99))
+    out[index[1:]] = (resid[1:] - rho * resid[:-1]) + slope * t[1:]
+    return out
+
+
+def _tfpw_rho_1d(y):
+    finite = np.isfinite(y)
+    if finite.sum() < 4:
+        return np.nan
+    t = np.flatnonzero(finite).astype("float64")
+    y_ok = y[finite]
+    return lag1_coefficient(y_ok - theilslopes(y_ok, t)[0] * t)
+
+
+def prewhiten_trend_free(da, dim="year", **kwargs):
+    """Apply trend-free prewhitening along ``dim`` of a DataArray."""
+    blended = xr.apply_ufunc(
+        _tfpw_1d,
+        da,
+        kwargs=kwargs,
+        input_core_dims=[[dim]],
+        output_core_dims=[[dim]],
+        vectorize=True,
+        output_dtypes=["float64"],
+    )
+    return blended.transpose(*da.dims).assign_attrs(da.attrs)
+
+
+def tfpw_rho(da, dim="year"):
+    """The lag-1 AR coefficient that TFPW would use (from the detrended series)."""
+    return xr.apply_ufunc(
+        _tfpw_rho_1d,
+        da,
+        input_core_dims=[[dim]],
+        output_core_dims=[[]],
+        vectorize=True,
+        output_dtypes=["float64"],
+    )
+
+
+def theilsen_mannkendall_tfpw(da, dim="year", **kwargs):
+    """Mann-Kendall on the TFPW series; Theil-Sen slope kept from the original.
+
+    Drop-in replacement for ``trends.theilsen_mannkendall``: same "parameter"
+    dimension, so it can be passed straight to
+    ``seasonal_trends.calc_trend_start_sensitivity(trend_func=...)``. Only the
+    p-value and tau come from the prewhitened series -- Yue et al. recommend
+    reporting the slope from the original data, since prewhitening changes the
+    residual variance.
+    """
+    blended = prewhiten_trend_free(da, dim=dim, **kwargs)
+    out = theilsen_mannkendall(blended, dim=dim, nan_policy="drop")
+    original = theilsen_mannkendall(da, dim=dim, nan_policy="drop")
+    for parameter in ["slope", "intercept", "slope_upper_bound", "slope_lower_bound"]:
+        out.loc[{"parameter": parameter}] = original.sel(parameter=parameter)
+
+    return out.assign_attrs(dict(out.attrs) | dict(method="theilsen_mannkendall_tfpw"))
 
 
 @_copy_xrattrs
@@ -57,7 +158,7 @@ def theilsen_mannkendall(
         X = x
         Y = y
 
-    parameters = "slope intercept pvalue tau slope_upper_bound slope_lower_bound".split()
+    parameters = ["slope", "intercept", "pvalue", "tau", "slope_upper_bound", "slope_lower_bound"]
     attrs = dict(
         method="theilsen_mannkendall",
         alpha=alpha,
@@ -81,7 +182,8 @@ def theilsen_mannkendall(
     )
 
     results = (
-        results.assign_coords(parameter=parameters)
+        results
+        .assign_coords(parameter=parameters)
         .assign_attrs(**attrs)
         .transpose("parameter", ...)
     )
@@ -146,7 +248,7 @@ def linregress_pearson(x: xr.Dataset, y: xr.Dataset = None, dim="time", nan_poli
         X = x
         Y = y
 
-    parameters = "slope intercept rvalue pvalue stderr".split()
+    parameters = ["slope", "intercept", "rvalue", "pvalue", "stderr"]
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=FutureWarning)
@@ -164,7 +266,8 @@ def linregress_pearson(x: xr.Dataset, y: xr.Dataset = None, dim="time", nan_poli
         )
 
     results = (
-        results.assign_coords(parameter=parameters)
+        results
+        .assign_coords(parameter=parameters)
         .assign_attrs(nan_policy=nan_policy, method="linregress_pearson")
         .transpose("parameter", ...)
     )
