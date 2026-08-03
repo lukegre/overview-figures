@@ -60,6 +60,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import yaml
+from matplotlib.colors import to_rgb
 from matplotlib.lines import Line2D
 from matplotlib.offsetbox import AnchoredOffsetbox, HPacker, TextArea
 from matplotlib.patches import Patch, Rectangle
@@ -99,7 +100,7 @@ def add_panel_label(ax, letter, description, style):
             pad=0,
             borderpad=0,
             frameon=False,
-            bbox_to_anchor=(0, 1.015),
+            bbox_to_anchor=(0, 1.02),
             bbox_transform=ax.transAxes,
         )
     )
@@ -121,7 +122,7 @@ def load_landings(cfg):
     return out
 
 
-def plot_landings(ax, landings, district, cfg, letter, show_ylabel):
+def plot_landings(ax, landings, district, label, cfg, letter, show_ylabel):
     conf = cfg["landings"]
     style = cfg["style"]
     df = landings.loc[district]
@@ -143,7 +144,7 @@ def plot_landings(ax, landings, district, cfg, letter, show_ylabel):
     if show_ylabel:
         ax.set_ylabel(conf["ylabel"], fontsize=style["font_size"])
     style_axis(ax, style)
-    add_panel_label(ax, letter, conf["panel_description"].format(district=district), style)
+    add_panel_label(ax, letter, conf["panel_description"].format(district=label), style)
 
 
 # =============================================================================
@@ -250,15 +251,56 @@ def centerline_distances(cfg, fjord_num, stations):
     return (polygons["distance_m"].max() - joined["distance_m"]) / 1e3
 
 
-def draw_flag(ax, x, y, size, rows, cfg):
-    """Two stacked 100 % bars (fish above plankton) with their top-left at (x, y).
+def abbreviate(group, cfg):
+    """Two-letter code for a group: from the config, else its first two letters."""
+    return cfg["edna"].get("abbrev", {}).get(group, group[:2])
+
+
+def _relative_luminance(color):
+    """WCAG relative luminance of a colour, 0 (black) to 1 (white)."""
+    r, g, b = (c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in to_rgb(color))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrasting_text_color(fill_color, label_conf):
+    """Dark letters on a light fill, light letters on a dark one."""
+    if _relative_luminance(fill_color) > label_conf["luminance_threshold"]:
+        return label_conf["color_on_light"]
+    return label_conf["color_on_dark"]
+
+
+def resolve_placement(placement, station_x, station_y):
+    """Config placement -> flag centre in data coords.
+
+    ``auto`` in either slot (or as the whole value) takes the station's own
+    coordinate, so the flag lines up with its marker on that axis.
+    """
+    if placement == "auto":
+        placement = ("auto", "auto")
+    x, y = placement
+    return (
+        station_x if x == "auto" else x,
+        station_y if y == "auto" else y,
+    )
+
+
+def draw_flag(ax, center, size, rows, cfg):
+    """Two stacked 100 % bars (fish above plankton) centred on ``center``.
 
     ``size`` is (width, row height, row gap) in data units, resolved from the
     fractional config values against the panel's own axis ranges.
+
+    Segments that take up at least ``labels.min_width_pct`` % of the bar are
+    annotated with their two-letter code, centred in the segment.
     """
     conf = cfg["transects"]["flags"]
+    label_conf = conf["labels"]
     colors = cfg["edna"]["colors"]
     width, height, gap = size
+
+    total_height = len(rows) * height + (len(rows) - 1) * gap
+    x = center[0] - width / 2
+    y = center[1] - total_height / 2
 
     top = y
     for row in rows:
@@ -281,10 +323,11 @@ def draw_flag(ax, x, y, size, rows, cfg):
         for group, pct in row.items():
             if pct <= 0:
                 continue
+            segment = width * pct / 100
             ax.add_patch(
                 Rectangle(
                     (left, top),
-                    width * pct / 100,
+                    segment,
                     height,
                     facecolor=colors[group],
                     edgecolor=conf["edge_color"],
@@ -292,7 +335,19 @@ def draw_flag(ax, x, y, size, rows, cfg):
                     zorder=5,
                 )
             )
-            left += width * pct / 100
+            if pct >= label_conf["min_width_pct"]:
+                ax.text(
+                    left + segment / 2,
+                    top + height / 2,
+                    abbreviate(group, cfg),
+                    color=contrasting_text_color(colors[group], label_conf),
+                    fontsize=label_conf["size"],
+                    ha="center",
+                    va="center",
+                    zorder=7,
+                    clip_on=False,
+                )
+            left += segment
         top += height + gap
 
     return x, y, x + width, top - gap  # flag bounding box
@@ -410,7 +465,8 @@ def plot_transect(ax, fjord_cfg, cfg, stations, fish_pct, plankton_pct, letter, 
                 rows.append(table.loc[station["station"]].to_dict())
             else:  # no reads for this station (e.g. no fish detected)
                 rows.append({})
-        bbox = draw_flag(ax, placement[0], placement[1], size, rows, cfg)
+        center = resolve_placement(placement, station["distance_km"], station["depth"])
+        bbox = draw_flag(ax, center, size, rows, cfg)
         draw_leader(ax, bbox, station["distance_km"], station["depth"], cfg)
 
     return here
@@ -427,9 +483,21 @@ def add_composition_legends(fig, cfg):
     colors = conf["colors"]
     y = layout["top"]
 
+    def label(group):
+        """ "Atlantic cod" -> "**At**lantic cod": the code bolded where it sits."""
+        code = abbreviate(group, cfg)
+        if not conf.get("legend_bold_abbrev", True):
+            return group
+        if group[: len(code)].lower() != code.lower():
+            # a hand-written code that is not the start of the name (e.g. "Gh" for
+            # Greenland halibut) has nothing to embolden, so spell it out instead
+            return f"{group} ({code})"
+        return rf"$\mathbf{{{group[: len(code)]}}}${group[len(code) :]}"
+
     def swatches(groups):
         return [
-            Patch(facecolor=colors[g], edgecolor="white", linewidth=0.6, label=g) for g in groups
+            Patch(facecolor=colors[g], edgecolor="white", linewidth=0.6, label=label(g))
+            for g in groups
         ]
 
     # The title sits to the left of the swatches rather than above them (a
@@ -514,9 +582,9 @@ def build_figure(cfg):
     layout = cfg["layout"]
     top = fig.add_gridspec(nrows=1, ncols=2, **layout["landings"], **layout["shared"])
     landings_axes = []
-    for i, district in enumerate(cfg["landings"]["districts"]):
+    for i, (district, label) in enumerate(cfg["landings"]["districts"].items()):
         ax = fig.add_subplot(top[0, i])
-        plot_landings(ax, landings, district, cfg, next(letters), show_ylabel=(i == 0))
+        plot_landings(ax, landings, district, label, cfg, next(letters), show_ylabel=(i == 0))
         landings_axes.append(ax)
 
     add_landings_legend(landings_axes, cfg)
@@ -546,7 +614,7 @@ def main(config_path):
 
     fig = build_figure(cfg)
     out = HERE / cfg["output"]["path"]
-    fig.savefig(out, dpi=cfg["output"]["dpi"])
+    fig.savefig(out, dpi=cfg["output"]["dpi"], bbox_inches="tight")
     print(f"wrote {out}")
 
 
