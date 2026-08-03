@@ -14,7 +14,7 @@ data:
 output:
   path: fig13-biodiversity.png
   dpi: 300
-  figsize: [ 9, 5.5 ] # width, height in inches
+  figsize: [ 10, 6 ] # width, height in inches
 
 # ---------------------------------------------------------------------------
 # Figure layout. All values are figure fractions (0 = left/bottom, 1 = right/top).
