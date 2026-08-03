@@ -4,11 +4,34 @@
 data:
   netcdf: data/landsat-rgb_and_tidal_flats-cleaned-1993-2024.nc
   csv: data/area_tide_height_fit.csv
+  turbidity: data/CR300_SouthGreenland.txt # panel (d): turbidity meter
+  ablatometer: data/CR1000_Ablato_store.dat # panel (d): ablatometer
+  discharge: data/freshwater_JB.csv # panel (e): MAR / Mankoff 2020
 
 output:
   path: fig14-tidal_plain.png
   dpi: 300
-  figsize: [ 10, 3.3 ] # width, height in inches
+  figsize: [ 10, 6 ] # width, height in inches
+
+# ---------------------------------------------------------------------------
+# Shared styling: applied to every line/scatter panel (b, d, e) so the panels
+# read as one figure. Mirrors the convention used elsewhere in this repo
+# (hidden top/right spines, thin grey spines, inward ticks).
+# ---------------------------------------------------------------------------
+style:
+  spine_color: "#555555"
+  spine_width: 0.6
+  tick_width: 0.6
+  tick_length: 2.5
+  color_blue: "#2C7FB8" # primary series colour (repo palette)
+  color_orange: "#D55E4B" # secondary / aggregated series colour
+  fit_color: k # regression line
+  fit_width: 1
+  band_color: "0.6" # bootstrap confidence-band fill
+  band_alpha: 0.4
+  ci: 99 # bootstrap confidence interval (%)
+  n_boot: 10000 # bootstrap resamples
+  seed: 0 # RNG seed for reproducible bootstrap bands
 
 # ---------------------------------------------------------------------------
 # Fetching Landsat scenes (via stac.py / Microsoft Planetary Computer)
@@ -59,23 +82,55 @@ scatter:
   marker_alpha: 0.9 # slight transparency eases the dense 2015-2024 cluster
   edgecolor: k
   edgewidth: 0.5
+  # regression line / bootstrap band settings are shared -> see `style` above
 
-  line_color: k # regression line
-  line_width: 1
-  ci: 99 # bootstrap confidence interval (%)
-  n_boot: 10000 # bootstrap resamples
-  band_color: "0.6" # confidence-band fill colour
-  band_alpha: 0.4
-  seed: 0 # RNG seed for reproducible bootstrap band
-
+  title: Tide-normalised delta area over time
   legend_title: Tide height [m]
   legend_step: 0.5 # spacing of tide-height values shown in the legend
 
-  xlabel: Year
+  xlabel: ""
   ylabel: "Normalised tidal plains area [km²]"
-  year0: 1995
-  tick_step_years: 5 # x-axis tick spacing
+  xtick_start_year: 1995
+  tick_step_years: 10 # x-axis tick spacing
   panel_label_fontsize: medium # the "b" label
+
+# ---------------------------------------------------------------------------
+# Panel (d): ablation rate vs. turbidity (Ian Delaney's field sensors, 2023)
+# Both series are averaged to daily values; the ablation rate is the day-to-day
+# change in the ablatometer distance (mm -> cm/day). The overlap of the two
+# records (2023-06-13 .. 2023-07-30) gives 47 daily pairs.
+# ---------------------------------------------------------------------------
+ablation:
+  ablation_column: ablato_mMeter # distance to the ice surface [mm]
+  turbidity_column: CV_Mean_Turb # turbidity [FNU]
+  marker_size: 30
+  marker_alpha: 0.9
+  edgecolor: k
+  edgewidth: 0.5
+
+  title: Ablation rate vs. turbidity
+  xlabel: Turbidity [FNU]
+  ylabel: "Ablation rate [cm day⁻¹]"
+
+# ---------------------------------------------------------------------------
+# Panel (e): Jespersen Bræ freshwater discharge (MAR, Mankoff et al. 2020)
+# Daily discharge with the annual total on a second y axis, plus a linear trend
+# (and bootstrap band) through the annual totals. Partial years are dropped.
+# ---------------------------------------------------------------------------
+discharge:
+  column: freshwater_discharge_MAR # daily discharge [m³ s⁻¹]
+  date_format: "%d-%m-%Y" # date format in the CSV
+  min_days_per_year: 365 # drop partial years (the CSV ends 2021-01-01)
+  daily_width: 0.5 # the dense daily series stays thin
+  daily_alpha: 0.8 # the annual line reads over the dense daily series
+  annual_width: 2.5
+  headroom: 1.15 # y-limit multiplier: leaves room for the legend / stats box
+
+  title: Freshwater discharge from Jespersen Bræ (MAR)
+  xlabel: ""
+  ylabel: "Discharge [m³ s⁻¹]"
+  ylabel_annual: "Annual discharge [10⁶ m³]"
+  tick_step_years: 5
 
 # ---------------------------------------------------------------------------
 # Layout
@@ -84,5 +139,12 @@ layout:
   divider: false # vertical line between panels a and b
   map_width_ratio: 1.0 # relative width of each map column
   scatter_width_ratio: 1.25 # relative width of the scatter column
-  panel_gap_ratio: 0.22 # empty spacer column between the maps and the scatter
-  map_wspace: 0.04 # gap between the two maps (fraction of avg axes width)
+  panel_gap_ratio: 0.3 # empty spacer column between the maps and the scatter
+  map_wspace: 0.06 # gap between the two maps (fraction of avg axes width)
+
+  # bottom row: panel (d) discharge | panel (e) ablation
+  ablation_width_ratio: 1.2
+  discharge_width_ratio: 1.6
+  row_height_ratios: [ 1.0, 1.0 ] # top (maps + scatter) vs. bottom row
+  bottom_wspace: 0.23 # gap between (d) and (e), as a fraction of (c)'s width
+  row_hspace: 0.25 # vertical gap between the two rows
