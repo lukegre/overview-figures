@@ -1,0 +1,83 @@
+[project]
+name = "fjord-props"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "lukegre", email = "lukegre@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.13.2",
+    "bottleneck>=1.6.0",
+    "centerline>=1.1.1",
+    "cmocean>=4.0.3",
+    "copernicusmarine>=2.3.0",
+    "earthaccess[virtualizarr]>=0.15.1",
+    "earthengine-helper",
+    "easydataverse>=0.4.2",
+    "fire>=0.7.1",
+    "folium>=0.20.0",
+    "gcsfs>=2025.12.0",
+    "geopandas>=1.1.1",
+    "geoviews>=1.15.1",
+    "h5netcdf>=1.8.0",
+    "hvplot>=0.12.1",
+    "ipykernel>=7.2.0",
+    "jupyter-bokeh>=4.0.5",
+    "loguru>=0.7.3",
+    "mapclassify>=2.10.0",
+    "matplotlib>=3.10.7",
+    "munch>=4.0.0",
+    "netcdf4>=1.7.4",
+    "planetarycomputer-helper",
+    "pooch>=1.8.2",
+    "pydantic-settings>=2.12.0",
+    "pyflwdir>=0.5.10",
+    "pygeoops>=0.6.0",
+    "pyresample>=1.35.0",
+    "pysolar>=0.13",
+    "raster-vector",
+    "rioxarray>=0.20.0",
+    "scikit-image>=0.25.2",
+    "stamina>=26.1.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.9,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+planetarycomputer-helper = { git = "https://gitlab.com/geospatial-tools/planetarycomputer-helper.git" }
+raster-vector = { git = "https://gitlab.com/geospatial-tools/raster-vector.git" }
+earthengine-helper = { git = "https://gitlab.com/geospatial-tools/earthengine-helper.git" }
+
+# ruff configuration
+[tool.ruff]
+line-length = 100
+exclude = ["build", "dist", ".venv", "env", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "B", "I"]
+ignore = ["E501", "E402"]
+
+[tool.ruff.lint.per-file-ignores]
+"*.ipynb" = ["I", "F401", "W291"]
+
+[dependency-groups]
+dev = [
+    "datashader>=0.18.2",
+    "icecream>=2.1.10",
+    "ipykernel>=7.1.0",
+    "ipython>=9.7.0",
+    "ipywidgets>=8.1.8",
+    "jedi>=0.19.2",
+    "prek>=0.3.3",
+    "ruff>=0.9.7",
+]
+vis = [
+    "folium>=0.20.0",
+    "hvplot>=0.12.1",
+    "mapclassify>=2.10.0",
+    "matplotlib>=3.10.7",
+]
