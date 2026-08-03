@@ -27,6 +27,7 @@ wheels/
 *.csv
 *.txt
 *.xlsx
+*.json
 
 *ipynb
 
@@ -35,3 +36,6 @@ wheels/
 *.pdf
 
 **/examples/domains.ipynb
+
+fig13-biodiversity/data/fjords/
+fig13-biodiversity/data/output_plankton_GF2023_share.tsv

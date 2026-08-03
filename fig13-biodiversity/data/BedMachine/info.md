@@ -1,0 +1,3 @@
+- Landing page: https://nsidc.org/data/idbmg4/versions/5
+- DOI: https://doi.org/10.5067/GMEVBWFLWA7X
+- User guide: https://nsidc.org/sites/default/files/documents/user-guide/idbmg4-v005-userguide.pdf

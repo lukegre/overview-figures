@@ -1,0 +1,226 @@
+# Configuration for plot_biodiversity_transects.py
+# Tweak any value here and re-run:  uv run python plot_biodiversity_transects.py
+
+data:
+  fish_catch: data/fish_catch/FIX012_20241112-130447.csv # panel (a): Greenland Statistics landings
+  edna_fish: data/edna/share_mifish_greenfjord_tablefull.csv # panel (b): MiFish 12S
+  edna_plankton: data/edna/share_eukatara_table.csv # panel (b): Eukaryote 18S (EukAtara)
+  bedmachine: data/BedMachine/BedMachineGreenland_bed-v6.tif
+  fjord_pickle: data/fjords/fjord_{fjord_num}/fjord_aggregator.pkl_joblib
+  # Bathymetry transects are slow to extract from BedMachine, so they are cached
+  # here. Delete the cache after changing `transects.bathymetry.agg_method`.
+  bathymetry_cache: data/bathymetry_{agg_method}_fjord_{fjord_num}.nc
+
+output:
+  path: fig13-biodiversity.png
+  dpi: 300
+  figsize: [ 10, 6 ] # width, height in inches
+
+# ---------------------------------------------------------------------------
+# Figure layout. All values are figure fractions (0 = left/bottom, 1 = right/top).
+# `landings` and `transects` are the two subplot rows; raise `transects.top` or
+# lower `landings.bottom` to close the vertical gap between the rows.
+# ---------------------------------------------------------------------------
+layout:
+  shared:
+    # applied to both subplot rows
+    left: 0.07
+    right: 0.98
+    wspace: 0.13 # horizontal gap between the left and right subplot
+  landings:
+    # row 1: panels (a) and (b)
+    top: 0.900
+    bottom: 0.73
+  landings_legend:
+    # the species-line legend, drawn inside one of the landings panels
+    panel: 0 # index into `landings.districts`: 0 = Qaqortoq, 1 = Narsaq
+    loc: upper left
+    anchor: [ 0.0, 1.0 ] # position within that panel's axes
+    ncol: 2
+  transects:
+    # row 2: panels (c) and (d)
+    top: 0.65
+    bottom: 0.290
+  legends:
+    # the eDNA swatch legends below row 2 (one line each)
+    left: 0.07 # x of the bold "Fish" / "Plankton" titles
+    entries_left: 0.135 # x where the swatches start, right of the title
+    top: 0.185 # vertical centre of the "Fish" line
+    row_gap: 0.045 # "Fish" line -> "Plankton" line
+
+style:
+  spine_color: "#555555"
+  spine_width: 0.6
+  tick_width: 0.6
+  tick_length: 2.5
+  font_size: 9 # base size: tick labels, axis labels
+  panel_label_size: 11 # the "(a) Narsaq: ..." labels above each subplot
+  legend_font_size: 9 # every legend entry (species lines, swatches, the key)
+  legend_title_size: 9 # the bold "Fish" / "Plankton" titles
+  legend_line_scale: 2 # legend line swatches are this much thicker than the plotted lines
+
+# ---------------------------------------------------------------------------
+# Panel (a): commercial landings, Narsaq and Qaqortoq districts
+# Source file is monthly x vessel-type x species; we sum to annual totals.
+# `species` are drawn as individual lines; everything else in the file is
+# summed into the "other" line.
+# ---------------------------------------------------------------------------
+landings:
+  # Panel label: bold "(a)" is added automatically, this is the plain part.
+  panel_description: "{district}: commercial fish landings, 2012-2024"
+  districts: [ Qaqortoq, Narsaq ] # left to right; panels are lettered in this order
+  value_column: Total landings of fish and shellfish
+  na_value: "-" # the CSV marks missing months with a dash
+  species:
+    # name in file -> line colour
+    Atlantic cod: "#2b3ed8"
+    Greenland halibut: "#1a9188"
+    Lumpfish: "#1f6b2e"
+  other_label: Other species
+  other_color: "#333333"
+  other_width: 0.8
+  line_width: 3
+  ylabel: Landings (tonnes)
+  ylim: [ 0, 1320 ]
+  yticks: [ 0, 400, 800, 1200 ]
+  # All 13 years do not fit at the base font size; list the ones you want.
+  xticks: [ 2012, 2014, 2016, 2018, 2020, 2022, 2024 ]
+
+# ---------------------------------------------------------------------------
+# Panel (b): eDNA community composition along the two fjord transects
+# ---------------------------------------------------------------------------
+transects:
+  panel_description: "{label}: eDNA community composition"
+  xlabel: Distance from glacier (km)
+  ylabel: Depth (m)
+
+  # Station distance-from-glacier is measured along the same fjord centreline
+  # that the bathymetry is aggregated onto, so the dots always sit on the
+  # section. Set to false to use the hand-digitised values in
+  # `examples/edna_plot.R` instead (those sit ~4-5 km closer to the glacier,
+  # because the centreline here starts at the head of the catchment rather
+  # than at the present-day terminus).
+  distance_from_centerline: true
+  manual_distance_km:
+    # fallback / examples/edna_plot.R values, keyed by station letter
+    B: 27
+    D: 57
+    K: 92
+    Z: 7
+    W: 30
+    V: 58
+
+  # Stations are matched to a fjord by the letter in their ID (GF23_<letter>_...).
+  # Station E sits in a side fjord that is not part of either transect (it is
+  # also dropped in examples/edna_plot.R) and is excluded.
+  fjords:
+  # left to right; panels are lettered in this order
+  - fjord_num: 56
+    label: Land fjord
+    stations: [ Z, W, V ]
+    xlim: [ 0, 72 ] # trimmed: the last few km are shallow skerries at the fjord mouth
+    ylim: [ 520, -20 ] # depth axis, inverted
+    yticks: [ 0, 100, 200, 300, 400, 500 ]
+  - fjord_num: 54
+    label: Glacial fjord
+    stations: [ B, D, K ]
+    xlim: [ 0, 110 ] # trimmed: the last few km are shallow skerries at the fjord mouth
+    ylim: [ 720, -20 ]
+    yticks: [ 0, 100, 200, 300, 400, 500, 600, 700 ]
+
+  bathymetry:
+    # How BedMachine is collapsed across each cross-fjord polygon. "min" is the
+    # thalweg (deepest point), which is what a fjord long-section should show and
+    # which is deep enough to contain the deep eDNA casts; "median" is shallower
+    # and much rougher because it averages in the fjord walls.
+    agg_method: min
+    # The section is labelled in place, in the bottom-left of each panel,
+    # instead of taking up a legend row. x/y are axes fractions.
+    label:
+      text: BedMachine v6 bathymetry
+      color: "#9e9a92"
+      size: 8
+      x: 0.015
+      y: 0.03
+    fill_color: "#e8e6e0"
+    line_color: "#333333"
+    line_width: 0.8
+    smooth_km: 2.0 # rolling-mean window applied to the BedMachine section
+
+  # The little stacked-bar "flags". Sizes are fractions of each panel's own axis
+  # ranges, so the bars look identical in both panels even though the two fjords
+  # have different depth ranges. Raise `row_height_frac` for chunkier bars, but
+  # check the deep flags still clear the seabed.
+  flags:
+    width_frac: 0.18 # flag width, as a fraction of the panel's x-range
+    row_height_frac: 0.055 # thickness of each stacked bar, fraction of the y-range
+    row_gap_frac: 0.008 # gap between the fish and plankton bars, fraction of the y-range
+    edge_color: white
+    edge_width: 0.6
+    marker_size: 18
+    leader_color: "#111111"
+    leader_width: 0.7
+    # Where each flag sits, as (x, y) of its top-left (shallowest) corner in
+    # data coordinates (km from glacier, depth in m). Keyed by station ID.
+    # The fish row is drawn first, the plankton row below it.
+    placement:
+      GF23_B_2m_edna: [ 8, 45 ]
+      GF23_B_355m_edna: [ 8, 230 ]
+      GF23_D_2m_edna: [ 38, 45 ]
+      GF23_D_600m_edna: [ 38, 420 ]
+      GF23_K_2m: [ 72, 45 ]
+      GF23_K_630m: [ 72, 420 ]
+      GF23_Z_2m: [ 4, 40 ]
+      GF23_Z_260m: [ 14, 150 ]
+      GF23_W_2m: [ 30, 40 ]
+      GF23_W_380m: [ 30, 250 ]
+      GF23_V_2m: [ 56, 40 ]
+      GF23_V_240m: [ 56, 150 ]
+
+# ---------------------------------------------------------------------------
+# eDNA grouping and colours
+#
+# Fish: the MiFish reads are assigned to the seven focal taxa below; everything
+# else (including the large genus-level `Gadus` block, which cannot be split
+# between G. morhua and G. ogac at 12S resolution) falls into "Other".
+# The two sequences in `gadus_morhua_sequences` are re-assigned to G. morhua,
+# following the correction in examples/edna_plot.R.
+#
+# Plankton: 18S reads are grouped by Class; the classes listed below are kept
+# and the rest are pooled into "Other".
+# ---------------------------------------------------------------------------
+edna:
+  gadus_morhua_sequences:
+  - CACCGCGGTTATACGAGAGGCCCAAATTGATGAAGAACGGCGTAAAGCGTGGTTAAGAAAAAAGAGAAAATATGGCCGAACAGCTTCAAAGCAGTTATACGCATCCGAAGTCACGAAGAACAATCACGAAAGTTGCCCTAAAACCTCCGATTCCACGAGAGCCATAAAA
+  - CACCGCGGTTATACGAGAGGCCCTAATTGATGAAGAACGGCGTAAAGCGTGGTTAAGAAAAAAGAGAAAATATGGCCGAACAGCTTCAAAGCAGTTATACGCATCCGAAGTCACGAAGAACAATCACGAAAGTTGCCCTAAAACCTCCGATTCCACGAAAGCCATAAAA
+
+  fish_groups:
+    # scientific_name in file -> group shown in the figure
+    Gadus morhua: Atlantic cod
+    Reinhardtius hippoglossoides: Greenland halibut
+    Mallotus villosus: Capelin
+    Sebastes mentella: Redfish
+    Sebastes: Redfish
+    Cyclopterus lumpus: Lumpfish
+    Anarhichas: Wolfish
+
+  plankton_classes: [ Dinoflagellata, Ciliophora, Chlorophyta, Ochrophyta, Metazoa ]
+
+  other_label: Other
+
+  # Draw order (left to right within a bar) and colours.
+  fish_order: [ Atlantic cod, Greenland halibut, Capelin, Redfish, Lumpfish, Wolfish ]
+  plankton_order: [ Dinoflagellata, Ciliophora, Chlorophyta, Ochrophyta, Metazoa, Other ]
+  colors:
+    Atlantic cod: "#1f4ed8"
+    Greenland halibut: "#128a86"
+    Capelin: "#6fa8dc"
+    Redfish: "#6a2d8f"
+    Lumpfish: "#1f6b2e"
+    Wolfish: "#e3b307"
+    Dinoflagellata: "#7a4116"
+    Ciliophora: "#2f6b1e"
+    Chlorophyta: "#3fae2a"
+    Ochrophyta: "#e3b307"
+    Metazoa: "#c9527e"
+    Other: "#c2c2c2"
