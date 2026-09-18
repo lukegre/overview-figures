@@ -1,0 +1,191 @@
+# Configuration for plot_ocean_transects.py
+# All paths are resolved relative to this file.
+
+data:
+  hydrography: data/GF24_phys_nut_dTM_v300625_for_Luke.xlsx
+  hydrography_sheet: data
+  # Exact BedMachine sections used by the biodiversity figure.
+  bathymetry_cache: ../fig13-biodiversity/data/bathymetry_{agg_method}_fjord_{fjord_num}.nc
+
+output:
+  png: figX-ocean-transects.png
+  pdf: figX-ocean-transects.pdf
+  dpi: 300
+
+figure:
+  figsize: [ 11.2, 9.2 ]
+  # The narrow empty second column makes the inter-transect gutter wider than
+  # the gap between the second transect and its colour bar.
+  width_ratios: [ 1.0, 0.07, 1.0, 0.035 ]
+  height_ratios: [ 1.0, 1.0, 1.0, 1.0 ]
+  left: 0.085
+  right: 0.935
+  bottom: 0.075
+  top: 0.955
+  wspace: 0.04
+  hspace: 0.17
+  colorbar_pad: 0.018
+  colorbar_label_pad: 9
+  panel_label_offset: [ 0.012, 0.055 ]
+
+# Expand the biologically active surface layer without sacrificing the full
+# water-column context. Each variable panel is drawn as two aligned axes: the
+# upper 0–50 m occupies one-third of the height and deeper water two-thirds.
+depth_split:
+  depth_m: 30
+  height_ratios: [ 1.0, 2.0 ]
+  hspace: 0.035
+  shallow_ticks: [ 0, 15 ]
+  break_mark_size: 0.010
+  break_mark_line_width: 0.65
+
+style:
+  font_family: DejaVu Sans
+  font_size: 8.5
+  axes_label_size: 9
+  column_title_size: 11
+  panel_label_size: 9.5
+  panel_label_weight: bold
+  spine_color: "#4d5961"
+  spine_width: 0.65
+  tick_width: 0.6
+  tick_length: 2.5
+  water_background: "#f4f7f8"
+  station_line_color: "#26343c"
+  station_line_alpha: 0.22
+  station_line_width: 0.45
+  station_marker_color: "#172228"
+  station_marker_size: 8
+  sample_marker_color: "#18242a"
+  sample_marker_size: 2.0
+  sample_marker_alpha: 0.55
+  no_data_text_color: "#68757d"
+
+# The workbook calls these eastern/western; the project terminology is
+# land/glacial fjord. Distance increases from the innermost station seaward.
+transects:
+- data_name: eastern
+  label: Land fjord
+  ylabel: Depth (m)
+  fjord_num: 56
+  # Derive limits from the outermost station distances.
+  xlim: [ 0, 50 ]
+  xticks: [ 0, 10, 20, 30, 40, 50 ]
+  ylim: [ 450, 0 ]
+  yticks: [ 100, 200, 300, 400 ]
+- data_name: western
+  label: Glacial fjord
+  ylabel: ""
+  fjord_num: 54
+  # Derive limits from the outermost station distances.
+  xlim: [ 0, 90 ]
+  xticks: [ 0, 20, 40, 60, 80 ]
+  ylim: [ 700, 0 ]
+  yticks: [ 0, 200, 400, 600 ]
+
+grid:
+  distance_step_km: 0.20
+  depth_step_m: 1.0
+  # Smooth piecewise-cubic interpolation for scattered distance-depth data.
+  # Valid alternatives are idw, linear and nearest; variables can override this.
+  method: cubic
+  idw:
+    # Elliptical axis scales: auto estimates mean station / profile spacing.
+    # Numeric overrides use km horizontally and m vertically.
+    distance_scale_km: auto
+    depth_scale_m: auto
+    power: 2.0
+    neighbors: 32
+  # Cubic surfaces can overshoot between observations. Constrain interpolated
+  # values to the observed range for each variable and fjord.
+  clip_to_data_range: true
+  # Preserve cubic interpolation inside the measured convex hull, then carry
+  # the deepest constrained value in each distance column downwards. The
+  # bathymetry drawn above the field masks values below the seabed.
+  vertical_extrapolation: bottom_hold
+  # Nearest-neighbour extrapolation remains disabled so the plot does not
+  # extend horizontally beyond the sampled transect.
+  extrapolate: false
+
+bathymetry:
+  # Visual treatment and in-place section label. Label x/y are axes fractions.
+  fill_color: "#e8e6e0"
+  line_color: "0.7"
+  line_width: 0.8
+  label:
+    text: BedMachine v6 bathymetry (mean aggregation)
+    color: "#9e9a92"
+    size: 8
+    x: 0.015
+    y: 0.03
+  # Cross-fjord aggregation: min (deepest/thalweg), median, mean, or max
+  # (shallowest). The matching cache must exist in fig13-biodiversity/data.
+  # This can also be overridden at run time with --bathymetry-aggregation.
+  agg_method: mean
+  smooth_km: 2
+
+axes:
+  xlabel: Distance from innermost station (km)
+  ylabel: Depth (m)
+  # Set to a zero-based row number to print station IDs above that row.
+  # null is cleaner for the densely occupied glacial transect.
+  show_station_labels_on_row: null
+  station_label_rotation: 90
+  station_label_size: 6.3
+  station_label_offset_m: 10
+
+# Colour limits are explicit so the two fjords can be compared directly.
+# Values outside the limits are retained and shown by extended colourbars.
+variables:
+- column: Potential_Temperature
+  label: Potential temperature
+  colorbar_label: "Potential temperature (°C)"
+  cmap: RdYlBu_r
+  limits: [ -1, 7 ]
+  levels: 17
+  ticks: [ -1, 1, 3, 5, 7 ]
+  station_filter: null
+  show_samples: false
+  smoothing: { distance_km: 0.25, depth_m: 1.0 }
+  interpolation_method: idw
+- column: Salinity
+  label: Salinity
+  colorbar_label: Salinity
+  cmap: cmo.haline
+  limits: [ 28, 35 ]
+  levels: 15
+  ticks: [ 28, 30, 32, 34 ]
+  station_filter: null
+  show_samples: false
+  interpolation_method: idw
+  smoothing: { distance_km: 0.25, depth_m: 1.0 }
+- column: NO3+NO2
+  label: Nitrate + nitrite
+  colorbar_label: "NO₃ + NO₂ (µmol L⁻¹)"
+  cmap: cmo.matter
+  limits: [ 0, 16 ]
+  levels: 15
+  ticks: [ 0, 4, 8, 12, 16 ]
+  station_filter: null
+  show_samples: true
+  # Bottle samples are too sparse for reliable cubic interpolation.
+  interpolation_method: linear
+  smoothing: { distance_km: 4, depth_m: 2.0 }
+- column: Chla
+  label: Chlorophyll fluorescence
+  colorbar_label: |
+    Chlorophyll fluorescence
+    (relative units)
+  cmap: cmo.algae
+  limits: [ 2, 20 ]
+  levels: 12
+  ticks: [ 2, 6, 10, 14, 18 ]
+  # The Seabird fluorometer writes to a different column and has a different
+  # baseline/scale. Idronaut is the only comparable channel across both fjords.
+  station_filter:
+    column: CTD_Type
+    equals: Idronaut
+  show_samples: false
+  # Fluorescence has fewer usable casts and cubic interpolation overshoots.
+  interpolation_method: idw
+  smoothing: { distance_km: 0.45, depth_m: 2.0 }

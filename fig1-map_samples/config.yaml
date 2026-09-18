@@ -1,0 +1,281 @@
+# Configuration for plot_overview_map.py
+# Tweak any value here and re-run:  uv run python plot_overview_map.py
+#
+# Coordinates are always given as lon/lat in decimal degrees (EPSG:4326),
+# bounding boxes as [west, south, east, north] and extents as [w, e, s, n].
+
+data:
+  # The master sampling spreadsheet. Row 0 holds per-column instructions for the
+  # people filling it in, so the header is on row 1 (`skiprows: 1`).
+  url: https://docs.google.com/spreadsheets/d/1iiT7vFbSD5viC6HbDgk3-UziFO5OaffKlKr9PUTY5YM/export?format=csv
+  cache: data/greenfjord_sample_locations.csv
+  skiprows: 1
+  # Delete the cache (or set this to false) to pull the current sheet again.
+  use_cache: true
+
+output:
+  path: fig1-overview_map.png
+  dpi: 300
+  figsize: [ 7, 4.6 ] # width, height in inches
+
+# ---------------------------------------------------------------------------
+# Map frame
+# ---------------------------------------------------------------------------
+map:
+  # UTM 24N: the GEUS topographic WMTS is only served in this projection.
+  epsg: 32624
+  # cartopy derives the projection bounds from the EPSG definition, which is
+  # wider than the tile matrix GEUS publishes; without this override `add_wmts`
+  # cannot match a tile matrix set. (x0, x1, y0, y1) in projected metres.
+  projection_bounds: [ 0, 804000, 100000, 9329000 ]
+  # Extent used while drawing (and for the red box in the inset map).
+  extent: [ -47.9, -44.5, 60.6, 61.33 ] # w, e, s, n
+  # Added to `extent` once every artist is placed, to make room for the scale
+  # bar at the bottom and the legend/inset at the top. Same [w, e, s, n] order.
+  extent_pad: [ 0, 0, -0.05, 0.15 ]
+  spine_width: 0.3
+
+basemap:
+  # GEUS 1:250 000 topographic map of Greenland (tan land, blue water, contours).
+  # GEUS moved this service off data.geus.dk (which now 404s, as in the original
+  # notebook) to imagedata.geus.dk; see the dataset record
+  # metadata.geus.dk/geonetwork/srv/api/records/f3c6c2e4-f161-4c42-83a4-b7acbd127980
+  url: https://imagedata.geus.dk/arcgis/rest/services/Greenland/G250_Topographic_Map_UTM24N/MapServer/WMTS
+  layer: Greenland_G250_Topographic_Map_UTM24N
+
+# ---------------------------------------------------------------------------
+# Ocean cluster: CTD stations, drawn as the ship's track
+#
+# The ocean stations form two fjord transects plus a scattering of stations
+# that belong to neither. Stations within `merge_dist_m` of each other are
+# merged to a single dot (the sheet lists repeat visits separately), then
+# ordered nearest-neighbour so the connecting line follows the fjord.
+# ---------------------------------------------------------------------------
+ocean:
+  cluster: Ocean
+  color: "#32507d"
+  line_width: 2
+  marker: o
+  marker_size: 2
+
+  # Shelf stations sit outside both fjords and are split between the two
+  # transects by the first letter of their Station ID.
+  shelf:
+    location_prefix: Shelf
+    # "L..." shelf stations continue the land-fjord line; the rest continue the
+    # glacial-fjord line.
+    land_fjord_station_prefix: L
+
+  transects:
+  # Drawn in this order. `label` is what appears in the legend; give it to one
+  # transect only, otherwise "Ocean" is listed several times.
+  - key: glacial
+    location_prefixes: [ EKAS ]
+    shelf: other # takes the shelf stations *not* matching `land_fjord_station_prefix`
+    # The cryosphere cluster also logged CTD casts in the glacial fjord; they
+    # are part of this transect rather than of the cryosphere markers.
+    include_cryosphere_ctd: true
+    merge_dist_m: 2000
+    label: null
+  - key: land
+    location_prefixes: [ Igaliku ]
+    shelf: match
+    merge_dist_m: 2000
+    label: Ocean
+  # Everything left over: dots only, no connecting line.
+  other:
+    merge_dist_m: 1000
+
+# ---------------------------------------------------------------------------
+# The remaining clusters, drawn as markers in this order (later entries sit on
+# top). The legend lists them in the same order, below the ocean line.
+#
+# `size_scale` multiplies `base_size`, so scaling the whole key up or down is a
+# one-line change. Marker codes are matplotlib's (s = square, P = thick plus,
+# * = star, ^ = triangle, o = circle).
+# ---------------------------------------------------------------------------
+markers:
+  base_size: 7
+  edge_color: k
+  edge_width: 0.3
+
+  layers:
+  - key: human
+    label: Human
+    cluster: Human
+    marker: s
+    size_scale: 0.7
+    color: white
+    merge_dist_m: 2000
+  - key: cryosphere
+    label: Cryosphere
+    cluster: Cryoshpere # the misspelling is in the source sheet
+    marker: P
+    size_scale: 0.8
+    color: "#4cd9c4"
+    merge_dist_m: 2000
+    exclude_types: [ CTD ] # CTD casts are drawn with the ocean transects
+  - key: atmosphere
+    label: Atmosphere
+    cluster: Atmosphere
+    marker: "*"
+    size_scale: 1.2
+    color: "#fa87af"
+    # Kangerlussuaq is ~450 km north and would blow up the map extent.
+    exclude_location_prefixes: [ Kanger ]
+    # Atmospheric sampling is mobile (kites, filters along the road), so nearby
+    # sites are merged far more aggressively than the point-based clusters.
+    merge_dist_m: 20000
+  - key: land
+    label: Land
+    cluster: Land
+    marker: ^
+    size_scale: 0.8
+    color: "#FA9F42"
+    include_types: [ Water ] # stream/river water samples only
+    # One dot per named site (the mean of its repeat samples) rather than a
+    # distance-based merge, so each catchment appears exactly once.
+    group_by_location: true
+  - key: biodiversity
+    label: Biodiversity
+    cluster: Biodiversity
+    marker: o
+    size_scale: 0.5
+    color: "#f9d423"
+    merge_dist_m: 5000
+
+# ---------------------------------------------------------------------------
+# Manual edits to the sampling locations, applied after the merging above.
+# Both of these were requested by Lisa Bröder (email thread from Julia,
+# 2025-07-11): the Igaliku outwash plain should be shown as a land site, and
+# the cryosphere work at the Igaliku glacier was missing from the sheet.
+# `id` is the row label: the site name for `land` (which is indexed by
+# location), the spreadsheet row number for the distance-merged layers.
+# ---------------------------------------------------------------------------
+edits:
+  add:
+  - layer: land
+    id: Igaliku river
+    lon: -45.161838
+    lat: 60.925885
+  - layer: cryosphere
+    id: Igaliku glacier
+    lon: -45.112572
+    lat: 60.952156
+  drop:
+  - layer: land
+    id: Igaliku Fjord # superseded by "Igaliku river" above
+
+# ---------------------------------------------------------------------------
+# The two boxed fjords. Each box is drawn twice: a thicker semi-transparent
+# black line first, then the coloured line on top, so it reads against both the
+# tan land and the blue water.
+# ---------------------------------------------------------------------------
+highlight_boxes:
+  line_width: 2
+  edge_color: k
+  edge_alpha: 0.7
+  # The coloured line is drawn at `inner_width_scale` x `line_width`.
+  inner_width_scale: 0.7
+  boxes:
+  - bbox: [ -45.925963, 61.255, -45.628645, 61.361010 ]
+    color: "#4cd9c4" # matches the cryosphere marker
+    label: "Sermeliuk fjord\nGlacial-fjord"
+    label_lonlat: [ -45.589351, 61.32 ]
+  - bbox: [ -45.46, 60.88, -44.98, 61.05 ]
+    color: "#FA9F42" # matches the land marker
+    label: "Igaliuku\nLand-fjord"
+    label_lonlat: [ -44.94, 60.987654 ]
+
+# ---------------------------------------------------------------------------
+# Settlement labels on the main map. All text on the map is drawn with a white
+# outline so it stays readable over the contoured basemap.
+# ---------------------------------------------------------------------------
+text:
+  font_size: 6
+  color: k
+  halo_width: 0.8
+  halo_color: white
+  halo_alpha: 0.6
+
+place_names:
+# Positions are the label anchor (left-aligned, vertically centred), not the
+# settlement itself, so they can be nudged clear of the markers.
+- { text: Narsaq, lonlat: [ -45.998662, 60.912675 ] }
+- { text: Qaqortoq, lonlat: [ -46.068453, 60.743331 ] }
+- { text: Qassiarsuk, lonlat: [ -45.51705, 61.110994 ] }
+- { text: Igaliku, lonlat: [ -45.387133, 61.010000 ] }
+
+# ---------------------------------------------------------------------------
+# The diffuse pink blob around Narsaq: the aerosol source region, which has no
+# hard boundary. Built from `n_rings` nested ellipses of increasing size, each
+# at `alpha`, so the fill fades outwards, plus a dashed outline at full size.
+# Sizes are in degrees: `max_radius` is the semi-axis in latitude and the
+# ellipse is twice as wide as it is tall.
+# ---------------------------------------------------------------------------
+atmosphere_area:
+  center_lonlat: [ -46.05, 60.912675 ]
+  max_radius: 0.3
+  aspect: 2 # width / height
+  n_rings: 30
+  color: "#fa87af"
+  alpha: 0.04
+  outline:
+    line_width: 0.5
+    line_style: "none"
+    alpha: 0.5
+
+legend:
+  loc: upper right
+  anchor: [ 0.52, 0.99 ] # inside the axes, left of the map's busy right half
+  ncol: 1
+  font_size: 6
+  edge_color: "0.8"
+  frame_width: 0.3
+
+# `size` is a matplotlib-map-utils preset (xs, sm, md, lg); it sets the default
+# proportions of every part of the bar/arrow.
+scale_bar:
+  size: xs
+  location: lower left
+  max_km: 30
+  label: 30 km
+  font_size: 5
+
+north_arrow:
+  size: xs
+  location: lower left
+  anchor: [ 0.0, 0.05 ] # in axes fractions, clear of the scale bar
+  line_width: 0.3
+
+# ---------------------------------------------------------------------------
+# Locator inset: southern Greenland, with the main map's extent as a red box.
+# ---------------------------------------------------------------------------
+inset:
+  location: upper left
+  # The inset is a separate axes drawn after the main one, so it would paint over
+  # the legend; keep it far enough left that the two do not overlap.
+  pad: [ 0.35, 0.01 ] # inches from the axes corner (x, y)
+  size: 1 # inches
+  projection:
+    central_longitude: -55
+    central_latitude: 60
+  extent: [ -58, -35, 58, 71 ] # w, e, s, n
+  land_color: "#edeadf"
+  coastline:
+    resolution: 50m
+    color: k
+    line_width: 0.3
+    alpha: 0.7
+  extent_box:
+    edge_color: r
+    line_width: 1
+  places:
+    Nuuk: [ -51.683857, 64.174465 ]
+    Sisimiut: [ -53.679586, 66.939339 ]
+  place_style:
+    marker: .
+    marker_size: 5
+    font_size: 5
+    alpha: 0.4
+    label_offset_lon: 1.5
