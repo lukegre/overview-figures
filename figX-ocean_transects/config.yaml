@@ -159,9 +159,11 @@ variables:
   show_samples: false
   interpolation_method: idw
   smoothing: { distance_km: 0.25, depth_m: 1.0 }
-- column: NO3+NO2
-  label: Nitrate + nitrite
-  colorbar_label: "NO₃ + NO₂ (µmol L⁻¹)"
+- column: DIN
+  label: Dissolved Inorganic Nitrogen
+  colorbar_label: |
+    Dissolved Inorganic Nitrogen 
+    (µmol L⁻¹)
   cmap: cmo.matter
   limits: [ 0, 16 ]
   levels: 15
