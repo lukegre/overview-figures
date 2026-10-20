@@ -1,0 +1,78 @@
+# Configuration for plot_S_SEAICE_PHENOL.py
+# Mean days per season with sea ice (top row) and trends in sea-ice season timing (bottom row), southern Greenland.
+
+inputs:
+  # Daily DMI OI sea-ice fraction (variable sea_ice_fraction, fraction 0-1), shared with fig3
+  sea_ice_daily: ../../data/sea_ice_dmioi_daily/sea_ice_dmioi_daily.nc
+
+analysis:
+  years: [ 1982, 2025 ] # first and last year of the window for seasonal means and trends
+  seasons: [ "DJF", "MAM", "JJA", "SON" ] # seasons of the top row, in plotting order
+  ice_threshold: 0.0 # fraction 0-1, a cell counts as ever ice-covered above this sea-ice fraction (map mask)
+  mask_min_days: 50 # days, cells with at most this many ice-covered days over the full record are blanked
+  ice_day_fraction: 0.02 # fraction 0-1, a day counts as ice-covered above this sea-ice fraction (0.15 = usual ice-edge definition)
+  min_ice_days: 2 # days, pixels with at most this many ice days over the record are dropped
+  min_gap: 60 # days, ice must persist at least this long to count as the sea-ice season
+  min_season_years: 5 # years, trends are shown only where a season exists in more than this many years
+  min_date_years: 15 # years, start / end trends also need a valid start / end date in more than this many years
+  alpha: 0.05 # significance level of the Mann-Kendall test; non-significant slopes are left blank
+  # Trend test: "standard" (Theil-Sen + Mann-Kendall) or "tfpw" (Mann-Kendall on the
+  # trend-free prewhitened series, Yue et al. 2002; slope still from the original series)
+  trend_method: "tfpw"
+  # Trend variables of the bottom row (names in the phenology dataset), in plotting order
+  trend_variables: [ "season_start_wrapped", "season_end", "season_duration", "season_count" ]
+  # Panel names of the bottom row, same order as trend_variables
+  trend_titles: [ "Start of sea ice season", "End of sea ice season", "Duration of sea ice season", "Days of cover during season" ]
+
+plot:
+  figsize: [ 11, 4.2 ] # width, height in inches
+  lat: [ 58.6, 63 ] # degrees north, map extent (south, north)
+  lon: [ -52, -40 ] # degrees east, map extent (west, east)
+  xticks: [ -50, -45 ] # degrees east, longitude tick positions
+  xlabel: "Longitude" # x-axis label of the bottom row
+  ylabel: "Latitude" # y-axis label of the left column
+  land_color: "0.93" # grey level of the land polygons, 0 = black, 1 = white
+  hspace: 0.15 # vertical space between rows, fraction of axes height
+  wspace: 0.06 # horizontal space between columns, fraction of axes width
+  cbar_pad: 0.013 # colourbar distance from the axes, fraction of axes
+  cbar_fraction: 0.025 # colourbar width, fraction of the axes row
+  cbar_aspect: 15 # colourbar length / width ratio
+  cbar_labelpad: 10 # pt, distance of the colourbar label from the bar
+  title: "{y0}–{y1}" # figure title; {y0} / {y1} are the first / last year of analysis.years
+  title_y: 0.95 # figure title height, fraction of the figure
+  label_y: -0.02 # panel label height, fraction of axes height
+  letter_x: 0.04 # panel letter position, fraction of axes width
+  name_x: 0.12 # panel name position, fraction of axes width
+  label_size: 7.5 # pt, panel letter and name
+  # Box behind the panel name so it stays readable over the data (matplotlib bbox properties)
+  label_box: { fc: "w", ec: "none", alpha: 0.7, pad: 1 }
+  # matplotlib rcParams overriding the shared paper style (greenfjord.viz.set_paper_style);
+  # these restore the matplotlib defaults the figure was designed with
+  style:
+    font.size: 10 # pt
+    axes.linewidth: 0.8 # pt
+    xtick.major.size: 3.5 # pt
+    ytick.major.size: 3.5 # pt
+  panels:
+    # Top row: mean days per season with ice
+    seasons:
+      levels: 10 # number of filled-contour levels
+      vmin: 0 # days, lower end of the colour scale
+      vmax: 90 # days, upper end of the colour scale
+      extend: "neither" # colourbar arrows: "neither", "min", "max" or "both"
+      cmap: "Blues" # matplotlib colour map
+      # {pct} is replaced by analysis.ice_day_fraction in %
+      cbar_label: "Mean days per season\nwith ice cover > {pct:g}%"
+      cbar_ticks: [ 0, 30, 60, 90 ] # days, colourbar tick positions
+    # Bottom row: trends, diverging colour scale from -vlim to vlim
+    trends:
+      cmap: "RdBu_r" # matplotlib diverging colour map
+      vlim: 3 # days per year, colour scale limit (trends beyond saturate)
+      levels: 11 # number of filled-contour levels
+      extend: "both" # colourbar arrows: "neither", "min", "max" or "both"
+      unit: "days year$^{-1}$" # trend unit (matplotlib mathtext)
+      cbar_label: "Trend ({unit})" # colourbar label; {unit} is panels.trends.unit
+
+output:
+  formats: [ "png", "pdf" ] # figure file formats
+  dpi: 300 # resolution of raster formats, dots per inch
