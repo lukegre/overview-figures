@@ -1,0 +1,9 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    // Code Runner: the ▷ button on config_<name>.yaml runs plot_<name>.py in the same folder
+    "code-runner.executorMapByGlob": {
+        "config_*.yaml": "f=$fileNameWithoutExt && cd $workspaceRoot && .venv/bin/python $dir\"plot_${f#config_}.py\""
+    },
+    "code-runner.saveFileBeforeRun": true
+}

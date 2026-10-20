@@ -44,3 +44,6 @@ data/geoboundaries_grl_adm1/geoBoundaries-GRL-ADM1.geojson
 
 # Archived (unused) code, figures and data
 archive/
+
+!.vscode/extensions.json
+!.vscode/settings.json
