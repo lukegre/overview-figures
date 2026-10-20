@@ -1,0 +1,198 @@
+# Configuration for plot_CTD_SECTIONS.py
+# 2024 CTD / nutrient sections (potential temperature, salinity, DIN, chlorophyll
+# fluorescence) of the land and glacial fjord, as distance-depth sections.
+
+inputs:
+  # Paths relative to this folder.
+  # GF24 CTD + nutrient workbook. Needs columns FEJORD, Station_ID, dist_from_1st,
+  # Depth, Bottom Depth, Latitude, Longitude, CTD_Type and one column per plotted variable
+  hydrography: data/GF24_phys_nut_dTM_v300625_for_Luke.xlsx
+  hydrography_sheet: "data" # worksheet name in the workbook
+  # BedMachine v6 fjord long-sections (shared dataset data/fjord_bathymetry); needs the
+  # variables distance_to_glacier_km (km) and bathymetry (m, negative below sea level).
+  # {agg_method} and {fjord_num} are filled from analysis.bathymetry.agg_method and
+  # plot.transects[].fjord_num
+  bathymetry: ../../data/fjord_bathymetry/fjord_bathymetry_{agg_method}_fjord_{fjord_num}.nc
+
+analysis:
+  # Interpolation grid and method (applied to each variable and fjord separately)
+  grid:
+    distance_step_km: 0.20 # km, horizontal grid spacing
+    depth_step_m: 1.0 # m, vertical grid spacing
+    # Smooth piecewise-cubic interpolation for scattered distance-depth data.
+    # Valid alternatives are "idw", "linear" and "nearest"; variables can override this
+    method: "cubic"
+    idw:
+      # Elliptical axis scales: "auto" estimates the mean station / profile spacing.
+      # Numeric overrides use km horizontally and m vertically
+      distance_scale_km: "auto" # km
+      depth_scale_m: "auto" # m
+      power: 2.0 # exponent of the inverse-distance weights (dimensionless)
+      neighbors: 32 # number of nearest observations used per grid cell
+    # Cubic surfaces can overshoot between observations. Constrain interpolated
+    # values to the observed range for each variable and fjord
+    clip_to_data_range: true
+    # Preserve cubic interpolation inside the measured convex hull, then carry
+    # the deepest constrained value in each distance column downwards ("bottom_hold").
+    # "none" disables this. The bathymetry drawn above the field masks values below the seabed
+    vertical_extrapolation: "bottom_hold"
+    # Stop the hold this far below the deepest value in each column, m; null = down to the seabed
+    vertical_extrapolation_max_m: 100
+    # Nearest-neighbour extrapolation remains disabled so the plot does not
+    # extend horizontally beyond the sampled transect
+    extrapolate: false
+  bathymetry:
+    # Cross-fjord aggregation: "min" (deepest/thalweg), "median", "mean", or "max"
+    # (shallowest). The matching file must exist in data/fjord_bathymetry
+    agg_method: "min"
+    smooth_km: 2 # km, width of the centred rolling mean along the section
+  # Per-variable processing, keyed by the workbook column in plot.variables
+  variables:
+    Potential_Temperature:
+      station_filter: null # keep all stations
+      interpolation_method: "idw" # overrides analysis.grid.method
+      smoothing: { distance_km: 0.25, depth_m: 1.0 } # km, m; Gaussian sigma
+    Salinity:
+      station_filter: null # keep all stations
+      interpolation_method: "idw" # overrides analysis.grid.method
+      smoothing: { distance_km: 0.25, depth_m: 1.0 } # km, m; Gaussian sigma
+    DIN:
+      station_filter: null # keep all stations
+      # Bottle samples are too sparse for reliable cubic interpolation
+      interpolation_method: "linear" # overrides analysis.grid.method
+      smoothing: { distance_km: 4, depth_m: 2.0 } # km, m; Gaussian sigma
+    Chla:
+      # The Seabird fluorometer writes to a different column and has a different
+      # baseline/scale. Idronaut is the only comparable channel across both fjords
+      station_filter:
+        column: "CTD_Type" # workbook column to filter on
+        equals: "Idronaut" # keep rows where the column equals this value
+      # Fluorescence has fewer usable casts and cubic interpolation overshoots
+      interpolation_method: "idw" # overrides analysis.grid.method
+      smoothing: { distance_km: 0.45, depth_m: 2.0 } # km, m; Gaussian sigma
+
+plot:
+  figsize: [ 11.2, 9.2 ] # width, height in inches
+  # The narrow empty second column makes the inter-transect gutter wider than
+  # the gap between the second transect and its colour bar
+  width_ratios: [ 1.0, 0.07, 1.0, 0.035 ] # columns: transect 1, gutter, transect 2, colour bar
+  height_ratios: [ 1.0, 1.0, 1.0, 1.0 ] # one row per variable
+  # Grid margins, fractions of the figure
+  left: 0.085
+  right: 0.935
+  bottom: 0.075
+  top: 0.955
+  wspace: 0.04 # horizontal space between columns, fraction of the mean column width
+  hspace: 0.17 # vertical space between rows, fraction of the mean row height
+  colorbar_label_pad: 9 # pt, gap between colour bar and its label
+  panel_label_offset: [ 0.012, 0.055 ] # x, y offset of the (a), (b), ... labels, axes fractions
+  # matplotlib rcParams overriding the shared paper style (greenfjord.viz.set_paper_style)
+  style:
+    font.family: "DejaVu Sans"
+    font.size: 8.5 # pt, also tick labels
+    axes.labelsize: 9 # pt, axis and colour-bar labels
+    axes.unicode_minus: true # real minus sign on tick labels
+    axes.titlelocation: "center" # column titles centred over the axes
+  column_title_size: 11 # pt, fjord names above the first row
+  panel_label_size: 9.5 # pt
+  panel_label_weight: "bold"
+  spine_color: "#4d5961" # also tick and colour-bar outline colour
+  spine_width: 0.65 # pt
+  tick_width: 0.6 # pt
+  tick_length: 2.5 # pt
+  water_background: "#f4f7f8" # axes background where no field is drawn
+  station_line_color: "#26343c" # vertical lines showing cast extent
+  station_line_alpha: 0.22
+  station_line_width: 0.45 # pt
+  station_marker_color: "#172228" # station dots on the surface; also station labels
+  station_marker_size: 8 # pt^2
+  sample_marker_color: "#18242a" # bottle-sample dots
+  sample_marker_size: 2.0 # pt^2
+  sample_marker_alpha: 0.55
+  # Expand the biologically active surface layer without sacrificing the full
+  # water-column context. Each variable panel is drawn as two aligned axes: the
+  # upper depth_m metres occupy one-third of the height and deeper water two-thirds
+  depth_split:
+    depth_m: 30 # m, boundary between the upper and lower axes
+    height_ratios: [ 1.0, 2.0 ] # upper, lower axes
+    hspace: 0.035 # space between the two axes
+    shallow_ticks: [ 0, 15 ] # m, y ticks of the upper axes
+    break_mark_size: 0.010 # axes fraction, size of the "//" marks at the break
+    break_mark_line_width: 0.65 # pt
+  bathymetry:
+    # Visual treatment and in-place section label. Label x/y are axes fractions
+    fill_color: "#e8e6e0" # seabed fill
+    line_color: "0.7" # seabed line (grey level)
+    line_width: 0.8 # pt
+    label:
+      text: "BedMachine v6 bathymetry"
+      color: "#9e9a92"
+      size: 8 # pt
+      x: 0.015 # axes fraction
+      y: 0.03 # axes fraction
+  axes:
+    xlabel: "Distance from innermost station (km)"
+    ylabel: "Depth (m)" # default y label of the lower axes (transects can override)
+    # Set to a zero-based row number to print station IDs above that row.
+    # null is cleaner for the densely occupied glacial transect
+    show_station_labels_on_row: null
+    station_label_rotation: 90 # degrees
+    station_label_size: 6.3 # pt
+    station_label_offset_m: 10 # pt, offset above the surface
+  # The workbook calls these eastern/western; the project terminology is
+  # land/glacial fjord. Distance increases from the innermost station seaward
+  transects:
+    - data_name: "eastern" # value of the workbook's FEJORD column
+      label: "Land fjord" # column title
+      ylabel: "Depth (m)"
+      fjord_num: 56 # fjord number of the bathymetry file
+      xlim: [ 0, 50 ] # km, or "data" to use the station distance extent
+      xticks: [ 0, 10, 20, 30, 40, 50 ] # km
+      ylim: [ 450, 0 ] # m, bottom, top
+      yticks: [ 100, 200, 300, 400 ] # m, ticks of the lower axes (those above depth_split.depth_m)
+    - data_name: "western"
+      label: "Glacial fjord"
+      ylabel: ""
+      fjord_num: 54
+      xlim: [ 0, 90 ] # km, or "data" to use the station distance extent
+      xticks: [ 0, 20, 40, 60, 80 ] # km
+      ylim: [ 700, 0 ] # m, bottom, top
+      yticks: [ 0, 200, 400, 600 ] # m
+  # Colour limits are explicit so the two fjords can be compared directly.
+  # Values outside the limits are retained and shown by extended colour bars
+  variables:
+    - column: "Potential_Temperature" # workbook column
+      colorbar_label: "Potential temperature (°C)"
+      cmap: "RdYlBu_r"
+      limits: [ -1, 7 ] # °C, colour range
+      levels: 17 # number of contour boundaries
+      ticks: [ -1, 1, 3, 5, 7 ] # °C, colour-bar ticks
+      show_samples: false # draw bottle-sample dots
+    - column: "Salinity"
+      colorbar_label: "Salinity"
+      cmap: "cmo.haline"
+      limits: [ 28, 35 ] # colour range
+      levels: 15 # number of contour boundaries
+      ticks: [ 28, 30, 32, 34 ] # colour-bar ticks
+      show_samples: false
+    - column: "DIN"
+      # trailing space after "Nitrogen" is kept to reproduce the original label placement
+      colorbar_label: "Dissolved Inorganic Nitrogen \n(µmol L⁻¹)"
+      cmap: "cmo.matter"
+      limits: [ 0, 16 ] # µmol L-1, colour range
+      levels: 15 # number of contour boundaries
+      ticks: [ 0, 4, 8, 12, 16 ] # µmol L-1, colour-bar ticks
+      show_samples: true
+    - column: "Chla"
+      colorbar_label: |
+        Chlorophyll fluorescence
+        (relative units)
+      cmap: "cmo.algae"
+      limits: [ 2, 20 ] # relative units, colour range
+      levels: 12 # number of contour boundaries
+      ticks: [ 2, 6, 10, 14, 18 ] # relative units, colour-bar ticks
+      show_samples: false
+
+output:
+  formats: [ png, pdf ] # figure file formats
+  dpi: 300 # resolution of raster formats, dots per inch
