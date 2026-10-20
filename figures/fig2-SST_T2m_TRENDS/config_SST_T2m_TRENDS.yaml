@@ -1,0 +1,121 @@
+# Configuration for plot_SST_T2m_TRENDS.py
+# Regional mask (a), annual SST (b) and annual 2 m air temperature (c) around southern Greenland,
+# with Theil-Sen trends; panel (c) uses ERA5 for two regions and the Narsarsuaq station.
+
+inputs:
+  # Paths relative to this folder
+  sst_monthly: ../../data/sst_dmioi_monthly/sst_dmioi_monthly.zarr # monthly DMI OI SST (analysed_st K, analysis_error K; ice-masked)
+  region_mask: ../../data/ocean_regions_mask/ocean_regions_mask.nc # ocean region raster (variable region, x/y in degrees)
+  era5_monthly: ../../data/era5_monthly_south_greenland/era5_monthly_south_greenland.nc # monthly ERA5 t2m (K)
+  land_ocean_ice: ../../data/greenfjord_land_ocean_ice/greenfjord_land_ocean_ice.gpkg # land / ocean / ice polygons (index column)
+  station_csv: ../../data/dmi_metobs_narsarsuaq/dmi_metobs_narsarsuaq.csv # DMI metObs Narsarsuaq, mean_air_temp (°C)
+
+analysis:
+  start_year: 1982 # first calendar year plotted and fitted
+  end_year: 2025 # last calendar year plotted and fitted
+  alpha: 0.05 # Mann-Kendall p-value below which a trend counts as significant (bold label)
+  trend_unit_per_years: 10 # trends are reported per this many years (10 = per decade)
+  # SST regions (IDs of the ocean region mask), drawn in this order
+  sst_regions:
+    - { id: 1, name: "Oceanic", color: "C0" } # id: mask value; name: region name; color: matplotlib colour
+    - { id: 2, name: "Southwest", color: "C1" }
+    - { id: 4, name: "South Eastern", color: "C3" }
+  # Shelf regions are refitted from start_year on (same result as the full fit when the
+  # series starts that year); their trend line is only drawn from that year
+  shelf_refit:
+    region_ids: [ 2, 4 ] # SST region IDs refitted
+    start_year: 1982 # first year used for the refit (calendar year)
+  # ERA5 t2m regions (raster values of the land/ocean/ice polygons: land 1, ocean 2, ice 3)
+  t2m_regions:
+    - { id: 1, name: "GreenFjord", color: "0.55" } # id: polygon raster value; color: matplotlib grey string
+    - { id: 2, name: "Southwest", color: "C1" }
+  # Station series plotted as a third line in panel (c) and as a marker on the map
+  station:
+    name: "Narsarsuaq" # label in the map legend
+    lon: -45.426 # degrees east
+    lat: 61.161 # degrees north
+    region_id: 3 # region coordinate given to the station series (must differ from the ERA5 IDs)
+    color: "C4" # line and marker colour
+
+plot:
+  figsize: [ 8, 3.4 ] # width, height in inches
+  # Outer grid: map column | line-plot column (margins are fractions of the figure)
+  outer_grid: { width_ratios: [ 1.02, 1.9 ], wspace: 0.18, left: 0.045, right: 0.99, top: 0.96, bottom: 0.105 }
+  map_grid: { height_ratios: [ 1, 0.2 ], hspace: 0.14 } # map | legend rows
+  lines_grid: { width_ratios: [ 1, 0.44 ], height_ratios: [ 1, 1 ], wspace: 0.08, hspace: 0.24 } # right half; second column is room for slope labels
+  legend_height_inches: 0.65 # height of the map legend box, inches
+  legend_gap_inches: 0.1 # gap between map and map legend, inches
+  temperature_unit: "°C" # unit of the temperature axes and slope labels
+  trend_period_label: "dec" # per-period label of the slope labels (matches analysis.trend_unit_per_years)
+  slope_label_format: "{:+.2f}" # Python format of the slope (in trend units)
+  # matplotlib rcParams overriding the shared paper style
+  style:
+    axes.titlesize: 8.5 # pt
+    axes.labelsize: 8 # pt
+    xtick.labelsize: 7.2 # pt
+    ytick.labelsize: 7.2 # pt
+    xtick.major.size: 3 # pt
+    ytick.major.size: 3 # pt
+    xtick.major.width: 0.6 # pt
+    ytick.major.width: 0.6 # pt
+    legend.fontsize: 7.2 # pt
+    legend.frameon: false # no legend frame
+  # Panels b and c: annual lines
+  lines:
+    xticks: [ 1982, 1990, 2000, 2010, 2020, 2025 ] # calendar years
+    title_pad: 3 # distance between axes and title, pt
+    line_width: 1.6 # annual mean line, pt
+    trend_line_width: 0.9 # Theil-Sen trend line, pt
+    trend_line_alpha: 0.9 # trend line opacity, 0-1
+    trend_line_style: "--" # matplotlib line style of the trend line
+    uncertainty_alpha: 0.1 # opacity of the SST uncertainty band, 0-1
+    label_font_size: 7.2 # slope label size, pt
+    label_offset_points: 5 # slope label distance right of the last year, pt
+    label_min_spacing_fraction: 0.075 # minimum vertical spacing of slope labels, fraction of the y-range
+    sst:
+      title: '$\bf{b}$  Sea-surface temperature' # panel title (mathtext bold letter)
+      ylim: [ 0, 7 ] # °C
+      yticks: [ 0, 2, 4, 6 ] # °C
+      uncertainty_divisor: 2 # band is analysis_error / this value (half the analysis error)
+    t2m:
+      title: '$\bf{c}$  2 m air temperature' # panel title (mathtext bold letter)
+      ylim: [ -6, 6 ] # °C
+      yticks: [ -4, 0, 4 ] # °C
+      xlabel: "Year" # x-axis label of the bottom panel
+  # Panel a: regional mask map
+  map:
+    title: '$\bf{a}$  Regional mask' # panel title (mathtext bold letter)
+    title_pad: 3 # distance between axes and title, pt
+    aspect: 2 # y/x data aspect ratio of the map
+    region_colors: [ "C0", "C1", "C2", "C3" ] # fill of mask values 1-4
+    region_names: [ "Oceanic", "Southwest", "Central western", "South Eastern" ] # legend labels of mask values 1-4
+    region_alpha: 0.8 # fill opacity, 0-1
+    hatched_region_id: 3 # mask value drawn with hatching
+    hatch: "////" # hatch pattern
+    hatch_color: "0.95" # hatch line colour (matplotlib grey string)
+    boundary_color: "white" # lines between mask regions
+    boundary_width: 0.35 # pt
+    boundary_alpha: 0.9 # 0-1
+    land_color: "0.95" # land fill (matplotlib grey string)
+    land_edge_color: "0.2" # coastline colour
+    land_edge_width: 0.4 # coastline width, pt
+    land_zorder: 10 # drawing order of the land polygons
+    greenfjord_land_index: "land" # polygon index outlined as GreenFjord land
+    greenfjord_land_edge_color: "0.15" # outline colour
+    greenfjord_land_edge_width: 1.0 # outline width, pt
+    greenfjord_ocean_index: "ocean" # polygon index whose boundary is dotted
+    greenfjord_ocean_edge_color: "#333333" # boundary colour
+    greenfjord_ocean_edge_width: 1.0 # boundary width, pt
+    greenfjord_label: "GreenFjord" # legend label of the land outline
+    marker_size: 5 # station marker on the map, pt
+    legend_marker_size: 7 # station marker in the legend, pt
+    marker_edge_color: "black" # station marker edge
+    marker_edge_width: 1.0 # pt
+    spine_width: 0.5 # frame width, pt
+    spine_color: "0.2" # frame colour
+    legend: { ncol: 2, handlelength: 2.0, handleheight: 1.3, handletextpad: 0.45, columnspacing: 0.8, labelspacing: 0.65 } # legend geometry, font-size units
+
+output:
+  formats: [ "png", "pdf" ] # figure file formats
+  dpi: 300 # resolution of raster formats and rasterised elements of the PDF, dots per inch
+  transparent_png: true # transparent background for the PNG (the PDF is saved opaque)
