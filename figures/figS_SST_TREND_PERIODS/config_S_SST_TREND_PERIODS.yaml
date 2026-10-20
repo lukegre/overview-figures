@@ -1,0 +1,56 @@
+# Configuration for plot_S_SST_TREND_PERIODS.py
+# Calendar-year mean SST trends, as a function of start year and end year.
+
+inputs:
+  # Paths relative to this folder. Monthly DMI OI SST (needs analysed_st and sea_ice_frac)
+  sst: ../../data/sst_dmioi_monthly/sst_dmioi_monthly.zarr
+  # Region raster with a `region` variable; its `names` attr lists the region names
+  region_mask: ../../data/ocean_regions_mask/ocean_regions_mask.nc
+
+analysis:
+  start_year: 1982
+  end_year: 2025 # last full year in the DMI OI SST zarr
+  # Ocean regions of data/ocean_regions_mask/ocean_regions_mask.nc (0 = near-shore, unused)
+  ocean_regions: [ 1 ]
+  region_name: Oceanic (> 500 m deep)
+  min_years: 20 # shortest trend period
+  step_size: 2 # step between start / end years
+  # Significance level: Mann-Kendall p-value threshold for annotating cells / the CSV,
+  # and the lag-1 autocorrelation bound used to decide on trend-free prewhitening
+  alpha: 0.05
+  # Handling of lag-1 autocorrelation in the Mann-Kendall test (Yue et al. 2002):
+  #   "auto"  - trend-free prewhitening only where the lag-1 autocorrelation is
+  #           significant at alpha
+  #   "force" - always apply trend-free prewhitening
+  #   "off"   - plain Mann-Kendall on the original series
+  # The Theil-Sen slope always comes from the original series.
+  prewhitening: "auto"
+  # Time unit for reporting trends, in years: 10 -> °C per decade, 1 -> °C per year
+  trend_unit_per_years: 10
+
+plot:
+  cmap: RdBu_r # diverging colour map for the slopes
+  figsize: [ 4.5, 3.55 ] # width, height in inches
+  # Axes grid margins, fractions of the figure (square panel: 0.63 x 4.5 in wide, 0.80 x 3.55 in tall)
+  margins: { left: 0.15, right: 0.78, top: 0.83, bottom: 0.03 }
+  cbar_axes: [ 0.84, 0.03, 0.03, 0.80 ] # left, bottom, width, height
+  # matplotlib rcParams overriding the shared paper style (greenfjord.viz.set_paper_style)
+  style:
+    font.size: 8 # pt
+    axes.labelsize: 8 # pt
+    xtick.labelsize: 6.6 # pt
+    ytick.labelsize: 6.6 # pt
+  caption_size: 7.2 # pt, caption text
+  # Caption (period, region, min. trend length) in the empty lower-right triangle
+  show_caption: false
+  cbar_tick_size: 7.2 # pt, colour-bar tick labels
+  # Trend-value labels written in the heat-map cells
+  annotation:
+    font_size: 4.5 # pt
+    format: "{:.2f}" # Python format string for the slope (in trend units)
+
+output:
+  formats: [ png, pdf ] # figure file formats
+  dpi: 300 # resolution of raster formats, dots per inch
+  # Also write the plotted numbers (slopes and p-values) as CSV files next to the figure
+  save_csv: false
