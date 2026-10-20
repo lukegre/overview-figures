@@ -1,106 +1,102 @@
-"""Recreate the biodiversity overview figure (examples/new_plot.png) from data.
+"""Commercial fish landings and eDNA community composition along two fjords.
 
 Panels (a, b): commercial fish landings 2012-2024 for the Narsaq and Qaqortoq
            districts (Greenland Statistics table FIX012). Monthly landings per
-           vessel type are summed to annual district totals; the three focal
-           species get their own line and everything else is pooled into
-           "Other species".
+           vessel type are summed to annual district totals; the focal species
+           get their own line and everything else is pooled into "Other species".
 Panels (c, d): eDNA community composition along the two GreenFjord 2023
-           transects, drawn over the real BedMachine v6 bathymetry of each
-           fjord. Each station carries a two-row "flag": the top row is the
-           MiFish (12S) fish community, the bottom row the EukAtara (18S)
-           plankton community, both as 100 % stacked bars of read counts.
+           transects, drawn over the BedMachine v6 bathymetry of each fjord
+           (``data/fjord_bathymetry``, read as is). Each station carries a
+           two-row "flag": the top row is the MiFish (12S) fish community, the
+           bottom row the EukAtara (18S) plankton community, both as 100 %
+           stacked bars of read counts.
 
 Every subplot is lettered in creation order by ``add_panel_label``: a bold
 "(a)" followed by the plain description from ``panel_description`` in the
 config, left-aligned above the axes.
 
-The two fjords are the glacial fjord (#54, ~123 km) and the land fjord
-(#56, ~78 km). Bathymetry is the BedMachine v6 thalweg: the deepest cell in
-each cross-fjord polygon along the centreline, extracted with
-``scripts/get_bathymetry.py`` and cached to netCDF (the first run reads the
-full GeoTIFF and takes ~30 s). The cross-fjord *median* used by default in
-``get_bathymetry.py`` is both rougher and too shallow to contain the deep eDNA
-casts, so ``transects.bathymetry.agg_method`` is set to ``min``.
-
-All tweakable elements live in ``config.yaml`` (species lists, colours, axis
-limits, and the placement of every composition flag). Run with::
-
-    uv run python plot_biodiversity_transects.py [config.yaml]
+Station distance from the glacier is measured along the fjord centreline
+(``analysis.transects.distance_from_centerline``), so the dots sit on the
+bathymetry section. Set that switch to false to use the hand-digitised values
+in ``analysis.transects.manual_distance_km`` instead.
 
 Notes on the data
 -----------------
-* The original ``examples/new_plot.png`` is a mock-up: its landings curves and
-  its bathymetry ("Illustrative bathymetry" in its legend) are both invented.
-  This script keeps that layout but plots the real numbers, so the curves and
-  the fjord sections look different from the mock-up.
-* Station distance-from-glacier is measured along the same centreline the
-  bathymetry uses, so the dots sit on the section. These come out ~4-5 km
-  larger than the hand-digitised values in ``examples/edna_plot.R`` because the
-  centreline starts at the head of the catchment rather than at the present-day
-  glacier terminus. Set ``transects.distance_from_centerline: false`` to use the
-  R values instead.
-* MiFish reads assigned only to the genus ``Gadus`` (332 k reads, 100 % identity)
-  cannot be split between Atlantic cod and Greenland cod at 12S resolution, so
-  they stay in "Other" rather than being called Atlantic cod. Only the two
-  sequences explicitly re-assigned in ``examples/edna_plot.R`` become
-  *Gadus morhua*. Move ``Gadus`` into ``edna.fish_groups`` in the config to
-  change that call.
+* MiFish reads assigned only to the genus ``Gadus`` cannot be split between
+  Atlantic cod and Greenland cod at 12S resolution, so they stay in "Other".
+  Only the two sequences in ``analysis.edna.gadus_morhua_sequences`` (re-assigned
+  in ``archive/examples/edna_plot.R``) become *Gadus morhua*.
 * Station E (``GF23_E_*``) sits in a side fjord that belongs to neither
-  transect and is dropped, as it is in ``examples/edna_plot.R``.
+  transect and is dropped.
+
+All settings live in ``config_FISH.yaml``. Run from the repository root:
+
+    MPLCONFIGDIR="$TMPDIR/mpl" .venv/bin/python figures/fig12_FISH/plot_FISH.py
 """
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
+import fjord_props as fp
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
-import yaml
 from matplotlib.colors import to_rgb
 from matplotlib.lines import Line2D
 from matplotlib.offsetbox import AnchoredOffsetbox, HPacker, TextArea
 from matplotlib.patches import Patch, Rectangle
 
-HERE = Path(__file__).parent
-sys.path.insert(0, str(HERE / "scripts"))  # get_bathymetry
+from greenfjord.config import get_script_name, read_config
+from greenfjord.viz import set_paper_style
+
+# paths and names, derived from the script name (plot_<NAME>.py)
+HERE = Path(__file__).resolve().parent
+NAME = get_script_name(__file__)  # FISH
+FIG_STEM = f"fig_{NAME}"  # prefix of the PNG / PDF outputs
+
+# config
+cfg = read_config(HERE / f"config_{NAME}.yaml")
+inputs = cfg["inputs"]
+ana = cfg["analysis"]
+plot = cfg["plot"]
+output = cfg["output"]
 
 
 # =============================================================================
 # shared styling
 # =============================================================================
-def style_axis(ax, style):
+def style_axis(ax):
     """Repo-wide axis look: no top/right spines, thin grey spines, inward ticks."""
     ax.spines[["top", "right"]].set_visible(False)
     for side in ("left", "bottom"):
-        ax.spines[side].set_color(style["spine_color"])
-        ax.spines[side].set_linewidth(style["spine_width"])
+        ax.spines[side].set_color(plot["spine_color"])
+        ax.spines[side].set_linewidth(plot["spine_width"])
     ax.tick_params(
         direction="in",
-        width=style["tick_width"],
-        length=style["tick_length"],
-        color=style["spine_color"],
+        width=plot["tick_width"],
+        length=plot["tick_length"],
+        color=plot["spine_color"],
     )
 
 
-def add_panel_label(ax, letter, description, style):
+def add_panel_label(ax, letter, description):
     """Left-aligned panel label above the axes: bold "(a)" then plain description."""
-    size = style["panel_label_size"]
-    parts = [TextArea(f"{letter}", textprops={"fontsize": size, "fontweight": "bold"})]
+    size = plot["panel_label_size"]
+    parts = [TextArea(letter, textprops={"fontsize": size, "fontweight": "bold"})]
     if description:
         parts.append(TextArea(description, textprops={"fontsize": size}))
 
     ax.add_artist(
         AnchoredOffsetbox(
             loc="lower left",
-            child=HPacker(children=parts, pad=0, sep=6, align="baseline"),
+            child=HPacker(children=parts, pad=0, sep=plot["panel_label_sep"], align="baseline"),
             pad=0,
             borderpad=0,
             frameon=False,
-            bbox_to_anchor=(0, 1.02),
+            bbox_to_anchor=(0, plot["panel_label_y"]),
             bbox_transform=ax.transAxes,
         )
     )
@@ -109,10 +105,10 @@ def add_panel_label(ax, letter, description, style):
 # =============================================================================
 # panels (a, b) -- commercial landings
 # =============================================================================
-def load_landings(cfg):
+def load_landings():
     """Annual landings per district and species (tonnes)."""
-    conf = cfg["landings"]
-    df = pd.read_csv(HERE / cfg["data"]["fish_catch"])
+    conf = ana["landings"]
+    df = pd.read_csv(HERE / inputs["fish_catch"])
     df["tonnes"] = pd.to_numeric(df[conf["value_column"]].replace(conf["na_value"], np.nan))
     annual = df.groupby(["district", "species", "time"])["tonnes"].sum().unstack("species")
 
@@ -122,29 +118,24 @@ def load_landings(cfg):
     return out
 
 
-def plot_landings(ax, landings, district, label, cfg, letter, show_ylabel):
-    conf = cfg["landings"]
-    style = cfg["style"]
+def plot_landings(ax, landings, district, label, letter, show_ylabel):
+    conf = plot["panels"]["landings"]
+    other_label = ana["landings"]["other_label"]
     df = landings.loc[district]
     years = df.index.astype(int)
 
-    for species, color in conf["species"].items():
-        ax.plot(years, df[species], color=color, lw=conf["line_width"])
-    ax.plot(
-        years,
-        df[conf["other_label"]],
-        color=conf["other_color"],
-        lw=conf["other_width"],
-    )
+    for species in ana["landings"]["species"]:
+        ax.plot(years, df[species], color=conf["species_colors"][species], lw=conf["line_width"])
+    ax.plot(years, df[other_label], color=conf["other_color"], lw=conf["other_width"])
 
     ax.set_xlim(years.min(), years.max())
     ax.set_xticks(conf["xticks"])
     ax.set_ylim(*conf["ylim"])
     ax.set_yticks(conf["yticks"])
     if show_ylabel:
-        ax.set_ylabel(conf["ylabel"], fontsize=style["font_size"])
-    style_axis(ax, style)
-    add_panel_label(ax, letter, conf["panel_description"].format(district=label), style)
+        ax.set_ylabel(conf["ylabel"], fontsize=plot["style"]["font.size"])
+    style_axis(ax)
+    add_panel_label(ax, letter, conf["panel_description"].format(district=label))
 
 
 # =============================================================================
@@ -155,9 +146,9 @@ def _station_letter(station_id):
     return station_id.split("_")[1]
 
 
-def load_stations(cfg):
+def load_stations():
     """One row per eDNA station: letter, sampling depth, lat/lon."""
-    plankton = pd.read_csv(HERE / cfg["data"]["edna_plankton"])
+    plankton = pd.read_csv(HERE / inputs["edna_plankton"])
     stations = (
         plankton
         .groupby("ID.Number")
@@ -184,64 +175,48 @@ def composition(counts, groups, order, other_label):
     return wide.div(wide.sum(axis=1), axis=0) * 100
 
 
-def load_compositions(cfg):
+def load_compositions():
     """Fish and plankton composition tables, both as percentages of reads."""
-    conf = cfg["edna"]
+    conf = ana["edna"]
+    panel = plot["panels"]["edna"]
 
-    fish = pd.read_csv(HERE / cfg["data"]["edna_fish"])
-    # Correct the two mis-assigned Atlantic cod sequences (examples/edna_plot.R).
+    fish = pd.read_csv(HERE / inputs["edna_fish"])
+    # Correct the two mis-assigned Atlantic cod sequences (archive/examples/edna_plot.R).
     is_cod = fish["sequence"].isin(conf["gadus_morhua_sequences"])
     fish.loc[is_cod, "scientific_name"] = "Gadus morhua"
     fish = fish.rename(columns={"ID.Number": "station", "scientific_name": "taxon"})
     fish_pct = composition(
         fish[["station", "taxon", "count"]],
         conf["fish_groups"],
-        conf["fish_order"],
+        panel["fish_order"],
         conf["other_label"],
     )
 
-    plankton = pd.read_csv(HERE / cfg["data"]["edna_plankton"])
+    plankton = pd.read_csv(HERE / inputs["edna_plankton"])
     plankton = plankton.rename(columns={"ID.Number": "station", "Class": "taxon"})
     plankton_groups = {c: c for c in conf["plankton_classes"]}
     plankton_pct = composition(
         plankton[["station", "taxon", "count"]],
         plankton_groups,
-        conf["plankton_order"],
+        panel["plankton_order"],
         conf["other_label"],
     )
     return fish_pct, plankton_pct
 
 
-def load_bathymetry(cfg, fjord_num):
-    """Along-centreline bathymetry section, cached after the first extraction."""
-    agg_method = cfg["transects"]["bathymetry"]["agg_method"]
-    cache = HERE / cfg["data"]["bathymetry_cache"].format(
-        fjord_num=fjord_num, agg_method=agg_method
+def load_bathymetry(fjord_num):
+    """Along-centreline BedMachine section from the shared dataset (variables
+    ``bathymetry`` in m and ``distance_to_glacier_km``, sorted by distance)."""
+    path = inputs["bathymetry"].format(
+        agg_method=ana["transects"]["bathymetry_agg_method"], fjord_num=fjord_num
     )
-    if cache.exists():
-        return xr.open_dataset(cache)
-
-    from get_bathymetry import get_fjord_bathymetry
-
-    section = get_fjord_bathymetry(
-        fjord_num,
-        fname_bedmachine6=str(HERE / cfg["data"]["bedmachine"]),
-        fname_fjord=str(HERE / cfg["data"]["fjord_pickle"]),
-        agg_method=agg_method,
-    )
-    section = section.compute().sortby("distance_to_glacier_km")
-    cache.parent.mkdir(parents=True, exist_ok=True)
-    section.to_netcdf(cache)
-    return section
+    return xr.open_dataset(HERE / path)
 
 
-def centerline_distances(cfg, fjord_num, stations):
+def centerline_distances(fjord_num, stations):
     """Distance from the glacier (km) per station, along the fjord centreline."""
-    import geopandas as gpd
-    from get_bathymetry import open_fjord_data
-
-    fjord = open_fjord_data(fjord_num, fname_fjord=str(HERE / cfg["data"]["fjord_pickle"]))
-    polygons = fjord.polygons
+    fjord = fp.FjordAggregator.from_pickle(str(HERE / inputs["fjord_pickle"].format(fjord_num=fjord_num)))
+    polygons = fjord.compute_polygons(interp_distance_m=ana["transects"]["centerline_grid_m"])
     points = gpd.GeoDataFrame(
         stations,
         geometry=gpd.points_from_xy(stations["lon"], stations["lat"]),
@@ -251,9 +226,9 @@ def centerline_distances(cfg, fjord_num, stations):
     return (polygons["distance_m"].max() - joined["distance_m"]) / 1e3
 
 
-def abbreviate(group, cfg):
+def abbreviate(group):
     """Two-letter code for a group: from the config, else its first two letters."""
-    return cfg["edna"].get("abbrev", {}).get(group, group[:2])
+    return plot["panels"]["edna"]["abbrev"].get(group, group[:2])
 
 
 def _relative_luminance(color):
@@ -284,7 +259,7 @@ def resolve_placement(placement, station_x, station_y):
     )
 
 
-def draw_flag(ax, center, size, rows, cfg):
+def draw_flag(ax, center, size, rows):
     """Two stacked 100 % bars (fish above plankton) centred on ``center``.
 
     ``size`` is (width, row height, row gap) in data units, resolved from the
@@ -293,9 +268,9 @@ def draw_flag(ax, center, size, rows, cfg):
     Segments that take up at least ``labels.min_width_pct`` % of the bar are
     annotated with their two-letter code, centred in the segment.
     """
-    conf = cfg["transects"]["flags"]
+    conf = plot["panels"]["transects"]["flags"]
     label_conf = conf["labels"]
-    colors = cfg["edna"]["colors"]
+    colors = plot["panels"]["edna"]["colors"]
     width, height, gap = size
 
     total_height = len(rows) * height + (len(rows) - 1) * gap
@@ -311,9 +286,9 @@ def draw_flag(ax, center, size, rows, cfg):
                     width,
                     height,
                     facecolor="none",
-                    edgecolor="#999999",
-                    linewidth=0.6,
-                    linestyle=(0, (2, 2)),
+                    edgecolor=conf["empty_edge_color"],
+                    linewidth=conf["empty_edge_width"],
+                    linestyle=(0, tuple(conf["empty_dashes"])),
                     zorder=5,
                 )
             )
@@ -339,7 +314,7 @@ def draw_flag(ax, center, size, rows, cfg):
                 ax.text(
                     left + segment / 2,
                     top + height / 2,
-                    abbreviate(group, cfg),
+                    abbreviate(group),
                     color=contrasting_text_color(colors[group], label_conf),
                     fontsize=label_conf["size"],
                     ha="center",
@@ -362,14 +337,14 @@ def _snap(value, low, high):
     return (low + high) / 2
 
 
-def draw_leader(ax, bbox, station_x, station_y, cfg):
+def draw_leader(ax, bbox, station_x, station_y):
     """Straight leader from the flag to the station dot.
 
     The anchor snaps to one of the flag's nine handles -- left/middle/right by
     upper/centre/lower -- picking each axis independently: the near edge when the
     station lies beyond the flag on that axis, the midpoint when it lies within.
     """
-    conf = cfg["transects"]["flags"]
+    conf = plot["panels"]["transects"]["flags"]
     x0, y0, x1, y1 = bbox
     anchor_x = _snap(station_x, x0, x1)
     anchor_y = _snap(station_y, y0, y1)  # y0 is the shallow (top) edge
@@ -392,20 +367,25 @@ def draw_leader(ax, bbox, station_x, station_y, cfg):
     )
 
 
-def plot_transect(ax, fjord_cfg, cfg, stations, fish_pct, plankton_pct, letter, show_ylabel):
-    conf = cfg["transects"]
-    style = cfg["style"]
+def plot_transect(ax, fjord, stations, fish_pct, plankton_pct, letter, show_ylabel):
+    """One fjord long-section: bathymetry, axes, and the station flags.
+
+    ``fjord`` merges the station list from ``analysis.transects.fjords`` with
+    the panel settings from ``plot.panels.transects.fjords``.
+    """
+    ana_conf = ana["transects"]
+    conf = plot["panels"]["transects"]
     bath_conf = conf["bathymetry"]
 
     # -- bathymetry section ---------------------------------------------------
-    section = load_bathymetry(cfg, fjord_cfg["fjord_num"])
-    dist = section["distance_to_glacier_km"].values
-    depth = -section["bathymetry"].values  # positive down
-    window = max(1, int(round(bath_conf["smooth_km"] / np.diff(dist).mean())))
+    with load_bathymetry(fjord["fjord_num"]) as section:
+        dist = section["distance_to_glacier_km"].values
+        depth = -section["bathymetry"].values  # positive down
+    window = max(1, int(round(ana_conf["bathymetry_smooth_km"] / np.diff(dist).mean())))
     depth = pd.Series(depth).rolling(window, center=True, min_periods=1).mean().values
 
-    floor = fjord_cfg["ylim"][0]
-    ax.axhline(0, lw=0.5, color="0.8", zorder=0)
+    floor = fjord["ylim"][0]
+    ax.axhline(0, lw=conf["sea_level_width"], color=conf["sea_level_color"], zorder=0)
     ax.fill_between(dist, depth, floor, color=bath_conf["fill_color"], zorder=1, linewidth=0)
     ax.plot(
         dist,
@@ -430,33 +410,34 @@ def plot_transect(ax, fjord_cfg, cfg, stations, fish_pct, plankton_pct, letter, 
     )
 
     # -- axes -----------------------------------------------------------------
-    ax.set_xlim(*fjord_cfg["xlim"])
-    ax.set_ylim(*fjord_cfg["ylim"])
-    ax.set_yticks(fjord_cfg["yticks"])
-    ax.set_xlabel(conf["xlabel"], fontsize=style["font_size"] + 1)
+    ax.set_xlim(*fjord["xlim"])
+    ax.set_ylim(*fjord["ylim"])
+    ax.set_yticks(fjord["yticks"])
+    ax.set_xlabel(conf["xlabel"], fontsize=conf["axis_label_size"])
     if show_ylabel:
-        ax.set_ylabel(conf["ylabel"], fontsize=style["font_size"] + 1)
-    style_axis(ax, style)
-    add_panel_label(ax, letter, conf["panel_description"].format(label=fjord_cfg["label"]), style)
+        ax.set_ylabel(conf["ylabel"], fontsize=conf["axis_label_size"])
+    style_axis(ax)
+    add_panel_label(ax, letter, conf["panel_description"].format(label=fjord["label"]))
 
     # -- stations -------------------------------------------------------------
-    here = stations[stations["letter"].isin(fjord_cfg["stations"])].copy()
-    if conf["distance_from_centerline"]:
-        here["distance_km"] = centerline_distances(cfg, fjord_cfg["fjord_num"], here).values
+    here = stations[stations["letter"].isin(fjord["stations"])].copy()
+    if ana_conf["distance_from_centerline"]:
+        here["distance_km"] = centerline_distances(fjord["fjord_num"], here).values
     else:
-        here["distance_km"] = here["letter"].map(conf["manual_distance_km"])
+        here["distance_km"] = here["letter"].map(ana_conf["manual_distance_km"])
 
     # Flag geometry is a fraction of each panel's own axis ranges, so the bars
     # look the same size in both panels even though their depth ranges differ.
-    xspan = abs(fjord_cfg["xlim"][1] - fjord_cfg["xlim"][0])
-    yspan = abs(fjord_cfg["ylim"][1] - fjord_cfg["ylim"][0])
+    flags = conf["flags"]
+    xspan = abs(fjord["xlim"][1] - fjord["xlim"][0])
+    yspan = abs(fjord["ylim"][1] - fjord["ylim"][0])
     size = (
-        conf["flags"]["width_frac"] * xspan,
-        conf["flags"]["row_height_frac"] * yspan,
-        conf["flags"]["row_gap_frac"] * yspan,
+        flags["width_frac"] * xspan,
+        flags["row_height_frac"] * yspan,
+        flags["row_gap_frac"] * yspan,
     )
     for _, station in here.iterrows():
-        placement = conf["flags"]["placement"].get(station["station"])
+        placement = flags["placement"].get(station["station"])
         if placement is None:
             continue
         rows = []
@@ -466,8 +447,8 @@ def plot_transect(ax, fjord_cfg, cfg, stations, fish_pct, plankton_pct, letter, 
             else:  # no reads for this station (e.g. no fish detected)
                 rows.append({})
         center = resolve_placement(placement, station["distance_km"], station["depth"])
-        bbox = draw_flag(ax, center, size, rows, cfg)
-        draw_leader(ax, bbox, station["distance_km"], station["depth"], cfg)
+        bbox = draw_flag(ax, center, size, rows)
+        draw_leader(ax, bbox, station["distance_km"], station["depth"])
 
     return here
 
@@ -475,18 +456,19 @@ def plot_transect(ax, fjord_cfg, cfg, stations, fish_pct, plankton_pct, letter, 
 # =============================================================================
 # legends
 # =============================================================================
-def add_composition_legends(fig, cfg):
-    """Fish / plankton swatch legends plus the section key, along the bottom."""
-    conf = cfg["edna"]
-    style = cfg["style"]
-    layout = cfg["layout"]["legends"]
-    colors = conf["colors"]
+def add_composition_legends(fig):
+    """Fish / plankton swatch legends along the bottom, one line each."""
+    edna = plot["panels"]["edna"]
+    layout = plot["layout"]["legends"]
+    swatch = plot["swatch_legend"]
+    titles = plot["legend_titles"]
+    colors = edna["colors"]
     y = layout["top"]
 
     def label(group):
         """ "Atlantic cod" -> "**At**lantic cod": the code bolded where it sits."""
-        code = abbreviate(group, cfg)
-        if not conf.get("legend_bold_abbrev", True):
+        code = abbreviate(group)
+        if not edna["legend_bold_abbrev"]:
             return group
         if group[: len(code)].lower() != code.lower():
             # a hand-written code that is not the start of the name (e.g. "Gh" for
@@ -496,21 +478,26 @@ def add_composition_legends(fig, cfg):
 
     def swatches(groups):
         return [
-            Patch(facecolor=colors[g], edgecolor="white", linewidth=0.6, label=label(g))
+            Patch(
+                facecolor=colors[g],
+                edgecolor=swatch["edge_color"],
+                linewidth=swatch["edge_width"],
+                label=label(g),
+            )
             for g in groups
         ]
 
     # The title sits to the left of the swatches rather than above them (a
     # matplotlib legend title is always stacked), so each block is one line.
     for groups, title, dy in (
-        (conf["fish_order"], "Fish", 0.0),
-        (conf["plankton_order"], "Plankton", -layout["row_gap"]),
+        (edna["fish_order"], titles["fish"], 0.0),
+        (edna["plankton_order"], titles["plankton"], -layout["row_gap"]),
     ):
         fig.text(
             layout["left"],
             y + dy,
             title,
-            fontsize=style["legend_title_size"],
+            fontsize=plot["legend_title_size"],
             fontweight="bold",
             ha="left",
             va="center",
@@ -521,23 +508,24 @@ def add_composition_legends(fig, cfg):
             bbox_to_anchor=(layout["entries_left"], y + dy),
             ncol=len(groups),
             frameon=False,
-            fontsize=style["legend_font_size"],
-            handlelength=1.2,
-            handleheight=1.0,
-            columnspacing=1.0,
-            borderpad=0.2,
+            fontsize=plot["legend_font_size"],
+            handlelength=swatch["handlelength"],
+            handleheight=swatch["handleheight"],
+            columnspacing=swatch["columnspacing"],
+            borderpad=swatch["borderpad"],
         )
         fig.add_artist(legend)
 
 
-def add_landings_legend(axes, cfg):
+def add_landings_legend(axes):
     """Species-line key, drawn inside one of the landings panels."""
-    conf = cfg["landings"]
+    conf = plot["panels"]["landings"]
+    landings = ana["landings"]
     # Legend swatches are short, so draw them thicker than the plotted lines.
-    scale = cfg["style"]["legend_line_scale"]
+    scale = plot["legend_line_scale"]
     handles = [
-        Line2D([], [], color=color, lw=conf["line_width"] * scale, label=species)
-        for species, color in conf["species"].items()
+        Line2D([], [], color=conf["species_colors"][species], lw=conf["line_width"] * scale, label=species)
+        for species in landings["species"]
     ]
     handles.append(
         Line2D(
@@ -545,10 +533,10 @@ def add_landings_legend(axes, cfg):
             [],
             color=conf["other_color"],
             lw=conf["other_width"] * scale,
-            label=conf["other_label"],
+            label=landings["other_label"],
         )
     )
-    layout = cfg["layout"]["landings_legend"]
+    layout = plot["layout"]["landings_legend"]
     ax = axes[layout["panel"]]
     ax.legend(
         handles=handles,
@@ -556,47 +544,44 @@ def add_landings_legend(axes, cfg):
         bbox_to_anchor=layout["anchor"],
         ncol=layout["ncol"],
         frameon=False,
-        fontsize=cfg["style"]["legend_font_size"],
-        handlelength=1.8,
-        columnspacing=1.8,
+        fontsize=plot["legend_font_size"],
+        **plot["line_legend"],
     )
 
 
 # =============================================================================
 # figure assembly
 # =============================================================================
-def build_figure(cfg):
-    style = cfg["style"]
-    plt.rcParams["font.size"] = style["font_size"]
+def build_figure():
+    fig = plt.figure(figsize=plot["figsize"])
 
-    fig = plt.figure(figsize=cfg["output"]["figsize"])
-
-    landings = load_landings(cfg)
-    stations = load_stations(cfg)
-    fish_pct, plankton_pct = load_compositions(cfg)
+    landings = load_landings()
+    stations = load_stations()
+    fish_pct, plankton_pct = load_compositions()
 
     # panels are lettered a, b, c, ... in the order they are created
     letters = iter("abcdefgh")
+    layout = plot["layout"]
 
     # -- landings, one panel per district --------------------------------------
-    layout = cfg["layout"]
     top = fig.add_gridspec(nrows=1, ncols=2, **layout["landings"], **layout["shared"])
     landings_axes = []
-    for i, (district, label) in enumerate(cfg["landings"]["districts"].items()):
+    for i, (district, label) in enumerate(ana["landings"]["districts"].items()):
         ax = fig.add_subplot(top[0, i])
-        plot_landings(ax, landings, district, label, cfg, next(letters), show_ylabel=(i == 0))
+        plot_landings(ax, landings, district, label, next(letters), show_ylabel=(i == 0))
         landings_axes.append(ax)
 
-    add_landings_legend(landings_axes, cfg)
+    add_landings_legend(landings_axes)
 
     # -- eDNA transects, one panel per fjord -----------------------------------
+    panel_fjords = {f["fjord_num"]: f for f in plot["panels"]["transects"]["fjords"]}
     bottom = fig.add_gridspec(nrows=1, ncols=2, **layout["transects"], **layout["shared"])
-    for i, fjord_cfg in enumerate(cfg["transects"]["fjords"]):
+    for i, transect in enumerate(ana["transects"]["fjords"]):
+        fjord = {**transect, **panel_fjords[transect["fjord_num"]]}
         ax = fig.add_subplot(bottom[0, i])
         plot_transect(
             ax,
-            fjord_cfg,
-            cfg,
+            fjord,
             stations,
             fish_pct,
             plankton_pct,
@@ -604,19 +589,17 @@ def build_figure(cfg):
             show_ylabel=(i == 0),
         )
 
-    add_composition_legends(fig, cfg)
+    add_composition_legends(fig)
     return fig
 
 
-def main(config_path):
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
+def main() -> None:
+    set_paper_style(plot.get("style"))
 
-    fig = build_figure(cfg)
-    out = HERE / cfg["output"]["path"]
-    fig.savefig(out, dpi=cfg["output"]["dpi"], bbox_inches="tight")
-    print(f"wrote {out}")
+    fig = build_figure()
+    for fmt in output["formats"]:
+        fig.savefig(HERE / f"{FIG_STEM}.{fmt}", dpi=output["dpi"], bbox_inches="tight")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else HERE / "config.yaml")
+    main()
