@@ -1,0 +1,160 @@
+# Configuration for plot_SEDIMENT_DELIVERY.py
+# Tidal-flat growth in a southern Greenland fjord (a, b maps; c area vs. year) and
+# its glacial drivers (d ablation vs. turbidity; e Jespersen Bræ freshwater discharge).
+
+inputs:
+  # Paths relative to this folder
+  # Cleaned Landsat cube: variables `rgb` (time, band, y, x) and `tidal_flats` (time, y, x), UTM 23N grid
+  netcdf: "data/landsat-rgb_and_tidal_flats-cleaned-1993-2024.nc"
+  # Per-scene table with tide height and tide-normalised tidal-plain area (columns used below)
+  area_csv: "data/area_tide_height_fit.csv"
+  # Turbidity logger (CR300), 2023; needs the `analysis.ablation.turbidity_column` column
+  turbidity: "data/CR300_SouthGreenland.txt"
+  # Ablatometer logger (CR1000), 2023; needs the `analysis.ablation.ablation_column` column
+  ablatometer: "data/CR1000_Ablato_store.dat"
+  # Daily MAR freshwater discharge for Jespersen Bræ (Mankoff et al. 2020)
+  discharge: "data/freshwater_JB.csv"
+
+analysis:
+  # Panels (a, b): the two Landsat scenes. Each date snaps to the nearest scene in the netCDF
+  # and the panel title shows the scene date actually used
+  maps:
+    left_date: "2014-07-02" # panel (a), ISO date
+    right_date: "2014-07-11" # panel (b), ISO date
+  # Landsat C2 L2 scenes fetched from Microsoft Planetary Computer (RGB land + SWIR water)
+  landsat:
+    enabled: true # false: skip the fetch and draw flat-colour maps (land_fallback_color)
+    bbox: [ -45.33165, 60.883190, -45.234146, 60.928097 ] # west, south, east, north, degrees
+    max_cloud_cover: 90 # %, permissive because the scene date is already known to be good
+    epsg: 32623 # output projection (UTM zone 23N), must match the netCDF grid
+    resolution_m: 30 # m, Landsat pixel size
+  # Panel (c): column names of the table in inputs.area_csv
+  area:
+    x_column: "time_dt0" # days since the first year
+    y_column: "tidal_plain_area_logistic_norm_to_tide_height" # km², tide-normalised area
+    hue_column: "tide_height" # m, colours the markers
+    year_column: "year" # calendar year, defines day 0 of x_column
+    days_per_year: 365.25 # days, converts x_column to years for the ticks
+  # Panel (d): both series are averaged to daily values (2023-06-13 .. 2023-07-30 -> 47 pairs)
+  ablation:
+    ablation_column: "ablato_mMeter" # distance to the ice surface, mm
+    turbidity_column: "CV_Mean_Turb" # turbidity, FNU
+    mm_per_cm: 10 # mm, converts the daily distance change (mm day-1) to cm day-1
+  # Panel (e): daily discharge and its annual totals
+  discharge:
+    column: "freshwater_discharge_MAR" # daily discharge, m³ s⁻¹
+    date_format: "%d-%m-%Y" # strptime format of the `time` column in the CSV
+    min_days_per_year: 365 # days, years with fewer days are dropped (the CSV ends 2021-01-01)
+    seconds_per_day: 86400 # s, converts m³ s⁻¹ to m³ day⁻¹
+    volume_unit_m3: 1.0e+6 # m³, annual total is given in units of this volume
+  # Regression line + percentile bootstrap band, shared by panels (c), (d), (e)
+  regression:
+    ci: 99 # %, bootstrap confidence interval
+    n_boot: 10000 # number of bootstrap resamples
+    seed: 0 # RNG seed for reproducible bands
+    n_grid: 200 # number of x points the fit line / band is drawn on
+
+plot:
+  figsize: [ 10, 6 ] # width, height in inches
+  # Outer grid margins, fractions of the figure
+  margins: { left: 0.06, right: 0.94, top: 0.94, bottom: 0.08 }
+  row_height_ratios: [ 1.0, 1.0 ] # top row (maps + scatter) vs. bottom row
+  row_hspace: 0.25 # vertical gap between the rows, fraction of the average axes height
+  title_fontsize: "medium" # pt or matplotlib size name, panel titles and letters
+  panel_letter_fontweight: "bold" # weight of the panel letters a-e
+  # matplotlib rcParams overriding the shared paper style (greenfjord.viz.set_paper_style).
+  # They restore the look of the figure before it was converted to the shared style
+  style:
+    font.size: 10 # pt (the shared style uses 8)
+    axes.linewidth: 0.8 # pt, spine width of the map axes (matplotlib default)
+  # Axis look of panels (c), (d), (e): no top/right spines, thin grey spines, inward ticks
+  axis:
+    spine_color: "#555555"
+    spine_width: 0.6 # pt
+    tick_width: 0.6 # pt
+    tick_length: 2.5 # pt
+  colors:
+    blue: "#2C7FB8" # primary series (ablation scatter, daily discharge)
+    orange: "#D55E4B" # annual discharge total
+  # Regression line, confidence band and the R²/p box
+  fit:
+    line_color: "k"
+    line_width: 1 # pt
+    band_color: "0.6" # grey level of the confidence band
+    band_alpha: 0.4
+    stats_text: "R-squared: {r2:.3f}\nP-value: {pval:.3f}" # R² and p-value of the slope
+    stats_fontsize: "medium"
+    stats_box_alpha: 0.75 # opacity of the white box behind the stats
+  panels:
+    # Panels (a, b): RGB true-colour base with SWIR over the water and the flats outlined
+    maps:
+      letters: [ "a", "b" ]
+      title_x: 0.09 # axes fraction, left edge of the date title
+      date_format: "%B %-d, %Y" # strftime format of the date titles
+      rgb_vmax: 0.3 # reflectance mapped to white in the true-colour land (vmin = 0)
+      swir_cmap: "cividis" # water (low) -> tidal flats (high)
+      swir_vmin: 0.0 # SWIR reflectance, colour scale minimum
+      swir_vmax: 0.2 # SWIR reflectance, colour scale maximum
+      land_fallback_color: "#d9d4cc" # land colour when the Landsat fetch is disabled or fails
+      contour_color: "#e8790c" # outline around the tidal flats
+      contour_linewidth: 1 # pt
+      tick_length: 3 # pt
+      width_ratio: 1.0 # relative width of each map column
+      wspace: 0.06 # gap between the maps, fraction of the average axes width
+      gap_ratio: 0.3 # width of the empty spacer column between maps and scatter
+    # Panel (c): tide-normalised tidal-plain area vs. year
+    scatter:
+      letter: "c"
+      title: "Tide-normalised delta area over time"
+      title_x: 0.05 # axes fraction
+      width_ratio: 1.25 # relative width of the scatter column
+      cmap: "cividis_r" # colours the tide height
+      marker_size: 30 # pt²
+      marker_alpha: 0.9 # slight transparency eases the dense 2015-2024 cluster
+      edgecolor: "k"
+      edgewidth: 0.5 # pt
+      xlabel: ""
+      ylabel: "Normalised tidal plains area [km²]"
+      xtick_start_year: 1995 # first tick, calendar year
+      tick_step_years: 10 # years between ticks
+      xlim_pad_days: [ -100, 250 ] # days, padding left of day 0 and right of the last point
+      xtick_stop_days: 13000 # days since the first year, last possible tick
+      legend_title: "Tide height [m]"
+      legend_step: 0.5 # m, spacing of the tide-height values in the legend
+      legend_ncol: 2
+      legend_marker_size: 7 # pt
+    # Panel (d): ablation rate vs. turbidity
+    ablation:
+      letter: "d"
+      title: "Ablation rate vs. turbidity"
+      title_x: 0.05 # axes fraction
+      marker_size: 30 # pt²
+      marker_alpha: 0.9
+      edgecolor: "k"
+      edgewidth: 0.5 # pt
+      xlabel: "Turbidity [FNU]"
+      ylabel: "Ablation rate [cm day⁻¹]"
+      margins: { x: 0.05, y: 0.08 } # axes data margins
+      stats_loc: [ 0.97, 0.03 ] # axes fraction; bottom-right is the empty corner
+      bottom_wspace: 0.23 # gap to panel (e), as a fraction of the panel (c) width
+    # Panel (e): freshwater discharge
+    discharge:
+      letter: "e"
+      title: "Freshwater discharge from Jespersen Bræ (MAR)"
+      title_x: 0.05 # axes fraction
+      daily_width: 0.5 # pt, thin because the daily series is dense
+      daily_alpha: 0.8
+      annual_width: 2.5 # pt
+      headroom: 1.15 # y-limit multiplier, leaves room for the legend and stats box
+      xlabel: ""
+      ylabel: "Discharge [m³ s⁻¹]"
+      ylabel_annual: "Annual discharge [10⁶ m³]"
+      tick_step_years: 5 # years between x ticks (first tick is the 6th year of the record)
+      first_tick_index: 5 # index of the first annual value that gets a tick
+      stats_loc: [ 0.02, 0.97 ] # axes fraction, top-left
+      legend_labels: [ "Daily discharge", "Annual total", "Annual trend" ]
+      legend_daily_width: 1.2 # pt, line width of the daily entry in the legend
+
+output:
+  formats: [ png ] # figure file formats (pdf would work too)
+  dpi: 300 # resolution of raster formats, dots per inch
