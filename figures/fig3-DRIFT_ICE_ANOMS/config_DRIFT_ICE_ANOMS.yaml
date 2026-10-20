@@ -1,0 +1,46 @@
+# Configuration for plot_DRIFT_ICE_ANOMS.py
+# Annual sea-ice cover duration anomaly (days per year) around southern Greenland, one map per year.
+
+inputs:
+  # Paths relative to this folder. Daily DMI OI sea-ice fraction (variable sea_ice_fraction, fraction 0-1)
+  sea_ice_daily: ../../data/sea_ice_dmioi_daily/sea_ice_dmioi_daily.nc
+
+analysis:
+  ice_threshold: 0.05 # a day counts as ice-covered when sea-ice fraction exceeds this (fraction, 0-1)
+  mask_min_days: 50 # cells with at most this many ice-covered days over mask_period are masked out (days)
+  mask_period: [ "2012-12-31", "2025-12-31" ] # start, end (ISO dates, inclusive) over which the mask is computed
+  anomaly_years: [ 2014, 2025 ] # first, last calendar year plotted; anomalies are relative to their mean
+
+plot:
+  lat: [ 58.6, 63 ] # map extent shown in each panel, degrees north (south, north)
+  lon: [ -52, -40 ] # map extent shown in each panel, degrees east (west, east)
+  col_wrap: 4 # panels per row
+  levels: 11 # number of contour levels (or list of level edges)
+  extend: "both" # colour-bar / contour extension beyond the levels
+  robust: true # robust colour limits (2nd-98th percentile) when levels is an integer
+  aspect: 1.1 # width / height of each panel
+  figsize: [ 9, 5 ] # width, height in inches
+  land_color: "0.93" # land fill (matplotlib grey string)
+  hspace: 0.1 # vertical space between panels, fraction of panel height
+  wspace: 0.1 # horizontal space between panels, fraction of panel width
+  right: 0.83 # right edge of the panel grid, fraction of figure width (room for colour bar)
+  cbar_label: "Sea ice cover duration anomaly" # colour-bar label, without unit
+  cbar_unit: "days" # unit appended to the colour-bar label
+  cbar_labelpad: 10 # distance between colour bar and its label, pt
+  # Panel labels, "a – 2015": letter and year are placed separately
+  label_y: -0.02 # vertical position of the panel labels, axes fraction
+  letter_x: 0.04 # horizontal position of the panel letter, axes fraction
+  year_x: 0.12 # horizontal position of the panel year, axes fraction
+  # matplotlib rcParams overriding the shared paper style: restores the matplotlib
+  # defaults this figure was made with (the paper style uses 8 pt, thin spines, no ticks)
+  style:
+    font.size: 10 # pt
+    axes.linewidth: 0.8 # pt
+    xtick.major.size: 3.5 # pt
+    ytick.major.size: 3.5 # pt
+    xtick.major.width: 0.8 # pt
+    ytick.major.width: 0.8 # pt
+
+output:
+  formats: [ "png" ] # figure file formats
+  dpi: 300 # resolution of raster formats, dots per inch
