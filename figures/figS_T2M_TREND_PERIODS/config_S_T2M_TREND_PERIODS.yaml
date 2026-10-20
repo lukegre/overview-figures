@@ -1,0 +1,68 @@
+# Configuration for plot_S_T2M_TREND_PERIODS.py
+# Seasonal (DJF, MAM, JJA, SON) 2 m air-temperature trends, as a function of start year and end year.
+
+inputs:
+  # Paths relative to this folder. Monthly ERA5 (needs t2m in K; time dim `valid_time`)
+  era5: ../../data/era5_monthly_south_greenland/era5_monthly_south_greenland.nc
+  # Polygons of land (1), ocean (2) and ice (3), rasterised onto the ERA5 grid
+  region_polygons: ../../data/greenfjord_land_ocean_ice/greenfjord_land_ocean_ice.gpkg
+
+analysis:
+  # Polygon set averaged over: "land", "ocean" or "ice" (rows 1, 2, 3 of the gpkg)
+  subset: "land"
+  region_name: GreenFjord land area # label for the region, used in captions
+  start_year: 1982 # first year of the series, calendar year
+  end_year: 2025 # last year of the series, calendar year
+  seasons: [ "DJF", "MAM", "JJA", "SON" ] # seasons drawn, one panel each (in this order)
+  min_years: 20 # shortest trend period, years
+  step_size: 2 # step between start / end years, years
+  # Significance level: Mann-Kendall p-value threshold for the dots / the CSV,
+  # and the lag-1 autocorrelation bound used to decide on trend-free prewhitening
+  alpha: 0.05
+  # Handling of lag-1 autocorrelation in the Mann-Kendall test (Yue et al. 2002):
+  #   "auto"  - trend-free prewhitening only where the lag-1 autocorrelation is
+  #           significant at alpha
+  #   "force" - always apply trend-free prewhitening
+  #   "off"   - plain Mann-Kendall on the original series
+  # The Theil-Sen slope always comes from the original series.
+  prewhitening: "auto"
+  # Time unit for reporting trends, in years: 10 -> °C per decade, 1 -> °C per year
+  trend_unit_per_years: 10
+
+plot:
+  figsize: [ 5, 4.4 ] # width, height in inches
+  # Gridspec of the 2 x 2 panels, passed to add_gridspec: spacing between panels and
+  # outer margins, fractions of the figure. Left and top leave room for the end-year and
+  # start-year labels and ticks; right leaves room for the colour bar
+  margins: { wspace: 0.05, hspace: 0.12, left: 0.11, right: 0.84, top: 0.864, bottom: 0.011 }
+  cmap: RdBu_r # diverging colour map for the slopes
+  # Shared colour limit, °C per trend unit. null spans the data range (winter dominates);
+  # set a number (e.g. 2.0) to clip it and bring out JJA and SON
+  vmax: null
+  # Colour-bar axes, fractions of the figure: left, bottom, width, height. To the right of the grid
+  cbar_axes: [ 0.865, 0.03, 0.025, 0.80 ]
+  cbar_tick_size: 7.2 # pt, colour-bar tick labels
+  caption_size: 7.2 # pt, panel caption text
+  cell_edge_linewidth: 0.35 # pt, width of the lines between heat-map cells
+  cell_edge_color: "white" # colour of the lines between heat-map cells
+  # Slope values written in the cells with a significant trend (Mann-Kendall p < analysis.alpha)
+  annotation:
+    font_size: 4.0 # pt, size of the slope values in the cells
+    format: "{:.1f}" # Python format string for the slope (in trend units)
+    # |slope| / vmax above which the value is written in light_color, where dark text is hard to read
+    switch_threshold: 0.55
+    dark_color: "0.15" # text colour on cells with a small slope (grey level, 0 = black)
+    light_color: "white" # text colour on cells with a large slope
+  # Panel letters, one per season in analysis.seasons (in the same order)
+  panel_letters: [ "a", "b", "c", "d" ]
+  # matplotlib rcParams overriding the shared paper style (greenfjord.viz.set_paper_style)
+  style:
+    axes.labelsize: 8 # pt
+    xtick.labelsize: 6.6 # pt
+    ytick.labelsize: 6.6 # pt
+
+output:
+  formats: [ "png", "pdf" ] # figure file formats
+  dpi: 300 # resolution of raster formats, dots per inch
+  # Also write the plotted numbers (slopes and p-values) as CSV files next to the figure
+  save_csv: false
