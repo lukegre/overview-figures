@@ -1,0 +1,85 @@
+# Configuration for plot_FJORD_ICE_BARS.py
+# Top row: boxplots of monthly sea-ice cover by fjord zone (Inner / Mid / Outer).
+# Bottom row: annual ice flux, freshwater flux and ocean melt per fjord.
+
+inputs:
+  # Paths relative to this folder
+  # Workbook with sheet `seaice_conc`: monthly sea-ice concentration (%), columns nested (fjord, zone)
+  ice_cover: ../../data/fjord_ice_regions_monthly/fjord_ice_regions_monthly.xlsx
+  # Per-glacier flux table (overview-paper tabulation), km3/yr
+  fluxes: fluxes_overviewpaper_tabulated.csv
+
+analysis:
+  ice_cover_sheet: seaice_conc # workbook sheet with the ice concentration
+  # Workbook zone names, in plotting order. These are the real workbook headers
+  # (note the trailing space in "Inner ")
+  zones: [ "Inner ", "Mid", "Outer" ]
+  coastal_column: [ Oceanic, Coastal ocean ] # workbook (header, zone) of the coastal-ocean reference series
+  # CSV columns summed per fjord
+  csv_fjord_column: Fjord
+  csv_ice_flux_column: "Ice flux (qice; km3/yr)" # km3/yr
+  csv_freshwater_flux_column: "Annual freshwater flux (qfwann; km3/yr)" # km3/yr
+  csv_ocean_melt_ratio_column: "Ocean melt (qoceanmelt; ratio to ice flux)" # ratio to ice flux (-)
+
+plot:
+  figsize: [ 4, 4 ] # width, height in inches
+  # Fjord panels, one per column, left to right
+  panels:
+  - csv_fjord: Sermilik # fjord name in the flux CSV
+    workbook_fjord: Sermelik - Ikersuaq # fjord header in the workbook (sic)
+    title: "Sermilik\nIkersuaq" # panel title
+    color: "#2C7FB8" # boxes and bars
+  - csv_fjord: Narsarsuaq
+    workbook_fjord: Tunuliarfik # sic
+    title: Tunulliarfik
+    color: "#9E3D88"
+  - csv_fjord: Igaliku
+    workbook_fjord: Igalikup Kangerlua
+    title: "Igalikup\nKangerlua"
+    color: "#D55E4B"
+  panel_letters: [ [ "b)", "c)", "d)" ], [ "e)", "f)", "g)" ] ] # top row, bottom row
+  panel_letter_xy: [ [ 0.04, 0.96 ], [ 0.04, 0.97 ] ] # axes fraction, top row, bottom row
+  x_positions: [ 1, 2, 3 ] # x position of the three boxes / bars
+  xlim: [ 0.3, 3.7 ] # x-axis range
+  xtick_rotation: 90 # degrees
+  font_size: medium # titles, labels, tick labels, panel letters
+  spine_linewidth: 0.6 # pt
+  spine_color: "#555555"
+  ylabel_labelpad_bottom: 10 # pt, flux axis label
+  # Ice-cover boxplots (top row)
+  ice:
+    ylim: [ 0, 100 ] # %
+    yticks: [ 0, 50, 100 ] # %
+    ylabel: Ice cover (%)
+    xticklabels: [ Inner, Mid, Outer ]
+    box_width: 0.55 # in x units
+    box_alpha: 0.40 # box fill opacity
+    box_linewidth: 1.1 # pt, box edge and median
+    whisker_color: "#333333"
+    whisker_linewidth: 1.0 # pt
+    flier_size: 4.5 # pt
+    flier_edgecolor: "0.6"
+    flier_edgewidth: 0.5 # pt
+    coastal_line_color: "0.5" # dashed line: mean coastal-ocean ice cover
+    coastal_line_width: 1.7 # pt
+    coastal_line_dashes: [ 2, 2 ] # on, off in line widths
+  # Flux bars (bottom row)
+  flux:
+    ylim: [ 0, 8 ] # km3/yr
+    yticks: [ 0, 2, 4, 6, 8 ] # km3/yr
+    ylabel: 'Fluxes km$^3\ yr^{-1}$ '
+    xticklabels: [ Ice flux, Freshw., Oc. melt ]
+    bar_width: 0.82 # in x units
+    bar_edgecolor: black
+    bar_linewidth: 0.55 # pt
+  # matplotlib rcParams overriding the shared paper style, to match the matplotlib defaults
+  # the figure was designed with
+  style:
+    font.size: 10 # pt
+    xtick.major.size: 3.5 # pt
+    ytick.major.size: 3.5 # pt
+    axes.linewidth: 0.8 # pt
+
+output:
+  formats: [ png, pdf ] # figure file formats
+  dpi: 300 # resolution of raster formats, dots per inch

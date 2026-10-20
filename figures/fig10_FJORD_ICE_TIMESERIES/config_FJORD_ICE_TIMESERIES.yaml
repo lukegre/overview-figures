@@ -1,0 +1,54 @@
+# Configuration for plot_FJORD_ICE_TIMESERIES.py
+# Monthly sea-ice cover in the inner, mid and outer zones of three South Greenland fjords.
+
+inputs:
+  # Workbook with sheet `seaice_conc`: monthly ice cover (%), two header rows
+  # (fjord, zone), first column = time. Also needs Oceanic / Coastal ocean.
+  ice_cover: ../../data/fjord_ice_regions_monthly/fjord_ice_regions_monthly.xlsx
+
+plot:
+  figsize: [ 8.0, 6.0 ] # width, height in inches
+  # Fjords drawn in every panel. `workbook_name` is the exact header string in the workbook,
+  # `label` the legend text, `color` the line colour
+  fjords:
+    - { workbook_name: "Sermelik - Ikersuaq", label: "Sermilik Ikersuaq", color: "#2C7FB8" }
+    - { workbook_name: "Tunuliarfik", label: "Tunulliarfik", color: "#9E3D88" }
+    - { workbook_name: "Igalikup Kangerlua", label: "Igalikup Kangerlua", color: "#D55E4B" }
+  # Fjord zones, one panel each (top to bottom). `workbook_name` is the exact
+  # workbook string ("Inner " has a trailing space), `label` the panel title
+  regions:
+    - { workbook_name: "Inner ", label: "Inner", panel_letter: "a" }
+    - { workbook_name: "Mid", label: "Mid", panel_letter: "b" }
+    - { workbook_name: "Outer", label: "Outer", panel_letter: "c" }
+  fjord_linewidth: 2.5 # pt, fjord lines
+  # Coastal-ocean reference series, added to the last panel
+  coastal_ocean:
+    workbook_name: [ "Oceanic", "Coastal ocean" ] # workbook header (level 0, level 1)
+    label: "Coastal ocean" # legend text
+    color: "#9E9E9E"
+    linewidth: 2.0 # pt
+  ylim: [ 0, 100 ] # ice cover axis range, %
+  yticks: [ 0, 25, 50, 75, 100 ] # %
+  ylabel: "Ice cover (%)"
+  xlabel: "Year"
+  reference_lines:
+    levels: [ 50, 100 ] # % ice cover where a horizontal line is drawn
+    color: "#D9D9D9"
+    linewidth: 0.7 # pt
+  spine_linewidth: 0.6 # pt
+  spine_color: "#555555"
+  tick_params: { direction: "in", width: 0.6, length: 2.5 } # width, length in pt
+  title_pad: 4 # pt, gap between panel and its title
+  x_tick_spacing_years: 2 # years between x tick labels
+  x_tick_format: "%Y" # strftime format of x tick labels
+  legend: { ncols: 4, loc: "upper center", fontsize: 9, frameon: false } # fontsize in pt
+  # matplotlib rcParams overriding the shared paper style (greenfjord.viz.set_paper_style)
+  style:
+    font.size: 10 # pt
+    axes.titlesize: large # relative to font.size
+    axes.titleweight: bold
+    axes.linewidth: 0.8 # pt (spines are overridden by spine_linewidth)
+
+output:
+  formats: [ png, pdf ] # figure file formats
+  dpi: 150 # resolution of raster formats, dots per inch
