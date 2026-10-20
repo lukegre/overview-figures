@@ -1,0 +1,56 @@
+# Configuration for plot_ICE_CHL_SEAS_DURATION.py
+# Two-panel map around southern Greenland: (a) sea-ice duration trend (DMI OI, recomputed here)
+# and (b) chlorophyll bloom duration trend (Nicholson et al., OC-CCI v6.0), both in days per year.
+
+inputs:
+  # Paths relative to this folder
+  sea_ice_daily: ../../data/sea_ice_dmioi_daily/sea_ice_dmioi_daily.nc # daily sea_ice_fraction (fraction, 0-1)
+  chl_bloom_trend: data/chlorophyll_bloom_duration_trend.nc # bloom duration trend (days per year), dims lat/lon
+
+analysis:
+  start_year: 1982 # first year of the sea-ice record used for the trend
+  end_year: 2025 # last year of the sea-ice record used for the trend
+  ice_threshold: 0.02 # a day is ice-covered above this sea-ice fraction (fraction, 0-1)
+  min_ice_days: 2 # pixels with at most this many ice days over the record are dropped (days)
+  min_gap: 60 # ice must persist for at least this many days to count as the ice season (days)
+  min_season_years: 5 # pixels need an ice season in more than this many years (years)
+  alpha: 0.05 # Mann-Kendall significance level; non-significant slopes are masked
+  min_chl_patch_pixels: 20 # chlorophyll patches smaller than this many connected pixels are masked (pixels)
+
+plot:
+  figsize: [ 6, 3.1 ] # width, height in inches
+  panels:
+    a:
+      title: "Sea ice duration" # panel title (the letter is added in bold)
+      cmap: "RdBu_r" # diverging colour map
+      vlim: 3 # colour scale is fixed to +/- this value (days per year)
+      levels: 11 # number of contour levels between -vlim and +vlim
+      extend: "both" # colour-bar / contour extension beyond the levels
+    b:
+      title: "Chlorophyll bloom duration" # panel title (the letter is added in bold)
+      cmap: "BrBG" # diverging colour map, centred on zero
+      levels: 15 # number of contour levels
+      robust: true # colour limits from the 2nd-98th percentile
+  cbar_label: "Duration trend (days$\\,\\cdot\\,$yr$^{-1}$)" # colour-bar label, both panels
+  cbar_shrink: 0.8 # colour-bar length relative to the panel width (fraction)
+  land_color: "0.93" # land fill (matplotlib grey string)
+  land_scale: "50m" # Natural Earth resolution of the land polygons
+  coastline_width: 0.5 # pt
+  title_size: "large" # panel title font size
+  title_x: 0.015 # horizontal position of the panel title, axes fraction
+  title_y: 0.015 # vertical position of the panel title, axes fraction
+  title_pad: 0.1 # padding of the white box behind the panel title (fraction of font size)
+  transparent: true # save with a transparent background
+  # matplotlib rcParams overriding the shared paper style: restores the matplotlib
+  # defaults this figure was made with (the paper style uses 8 pt, thin spines, no ticks)
+  style:
+    font.size: 10 # pt
+    axes.linewidth: 0.8 # pt
+    xtick.major.size: 3.5 # pt
+    ytick.major.size: 3.5 # pt
+    xtick.major.width: 0.8 # pt
+    ytick.major.width: 0.8 # pt
+
+output:
+  formats: [ "png", "pdf" ] # figure file formats
+  dpi: 300 # resolution of raster formats, dots per inch
