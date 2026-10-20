@@ -1,0 +1,98 @@
+# Configuration for plot_AEROSOL_CONC.py
+# Aerosol number-concentration box plots per station with composition pie charts overlaid.
+
+inputs:
+  # Tab-separated box statistics per station (column `placesnames`; *_25/_50/_75 = Q1/median/Q3,
+  # *_10EB/_90EB = whisker lengths from the box edges), cm-3
+  box_stats: data/box-plots.txt
+  # Tab-separated ion fractions (rows `species` = NA/NO3/SO4/NH4, one column per station), fraction
+  ion_fractions: data/Pie-charts.txt
+
+analysis:
+  stations: [ Narsaq, Zeppelin, Villum, Mace Head, Jungfraujoch ] # box order, left to right (names as in box_stats)
+  # Station -> column in ion_fractions. Stations not listed (Mace Head) get no pie.
+  # Narsaq column is "Na_species_PM10" (Na = Narsaq, not sodium).
+  pie_columns:
+    Narsaq: Na_species_PM10
+    Zeppelin: Zep_species
+    Villum: Vil_species
+    Jungfraujoch: JFJ_species
+  species_rows: # row label in ion_fractions -> ion name used in the figure
+    NA: Sodium
+    NO3: Nitrate
+    SO4: Sulfate
+    NH4: Ammonium
+
+plot:
+  figsize: [ 7.5, 4.5 ] # inches (width, height)
+  ion_order: [ Sodium, Nitrate, Sulfate, Ammonium ] # pie slice order (clockwise) and legend order
+  ion_colors: # colours sampled from the original figure; they carry meaning in the community
+    Sodium: "#6911dd" # purple
+    Nitrate: "#173df5" # blue
+    Sulfate: "#ea3323" # red
+    Ammonium: "#f3ae3d" # orange
+  station_labels: # x tick labels, in the order of analysis.stations
+    - "Narsaq\nGreenland"
+    - "Zeppelin\nSvalbard"
+    - "Villum\nGreenland"
+    - "Mace Head\nIreland"
+    - "Jungfraujoch\nSwitzerland"
+  xtick_fontsize: 11 # points
+  xtick_fontweight: 100 # font weight of station labels (numeric, as in the original)
+  ylabel: "number concentration (cm$^{-3}$)"
+  ylim: [ 0, 3050 ] # cm-3
+  yticks: { start: 0, stop: 3000, step: 500 } # cm-3, stop inclusive
+  xlim_pad: 1 # x axis spans 0 .. n_stations + xlim_pad (box positions are 1..n)
+  box:
+    width: 0.5 # box width, in x-axis units
+    facecolor: white
+    color: black # edge, whisker and median colour
+    linewidth: 1.3 # points
+    cap_linewidth: 0 # whisker cap line width (0 = no caps, as in the original)
+  pie:
+    # Per station: x = box position, y = centre height (cm-3), radius = pie size as a fraction of one x unit
+    positions:
+      Narsaq: { x: 1.0, y: 2550, radius: 0.60 }
+      Zeppelin: { x: 2.0, y: 1950, radius: 0.56 }
+      Villum: { x: 3.0, y: 1500, radius: 0.54 }
+      Jungfraujoch: { x: 5.0, y: 1250, radius: 0.54 }
+    axes_half_width: 1.45 # inset axes span +-this around the pie (radius 1), so outside labels are not clipped
+    startangle: 270 # degrees, first slice starts here
+    label_distance: 1.26 # percentage labels, in pie radii from centre
+    label_fontsize: 8 # points
+    label_color: black
+    explode: 0.02 # gap between slices, fraction of radius
+    edge_linewidth: 1 # points, slice outline
+    edge_color: white
+    autopct: "%.0f%%" # percentage label format
+  legend:
+    loc: upper right
+    bbox_to_anchor: [ 0.99, 0.99 ] # axes fraction
+    weight: bold # font weight; each name is printed in its ion colour
+  style: # matplotlib rcParams overriding the shared paper style (from the old figure.mplstyle)
+    font.sans-serif: [ DejaVu Sans, Arial, Helvetica ]
+    font.size: 10
+    axes.labelsize: medium
+    axes.titlesize: medium
+    xtick.labelsize: medium
+    ytick.labelsize: medium
+    legend.fontsize: medium
+    axes.linewidth: 0.7
+    lines.linewidth: 2.0
+    axes.spines.top: false
+    axes.spines.right: false
+    axes.spines.bottom: true
+    axes.edgecolor: black
+    axes.labelcolor: black
+    text.color: black
+    xtick.direction: out
+    ytick.direction: out
+    xtick.color: black
+    ytick.color: black
+    xtick.major.size: 3.5 # the shared paper style sets 0; the old figure used the matplotlib default
+    ytick.major.size: 3.5
+    legend.frameon: false
+
+output:
+  formats: [ png, pdf ]
+  dpi: 300

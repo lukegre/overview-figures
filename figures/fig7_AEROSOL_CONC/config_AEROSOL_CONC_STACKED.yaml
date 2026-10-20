@@ -1,0 +1,114 @@
+# Configuration for plot_AEROSOL_CONC_STACKED.py
+# Two panels: stacked-bar ion composition (top) and log-scale aerosol number-concentration box plots (bottom).
+
+inputs:
+  # Tab-separated box statistics per station (column `placesnames`; *_25/_50/_75 = Q1/median/Q3,
+  # *_10EB/_90EB = whisker lengths from the box edges), cm-3
+  box_stats: data/box-plots.txt
+  # Tab-separated ion fractions (rows `species` = NA/NO3/SO4/NH4, one column per station), fraction
+  ion_fractions: data/Pie-charts.txt
+
+analysis:
+  stations: [ Narsaq, Zeppelin, Villum, Mace Head, Jungfraujoch ] # box order, left to right (names as in box_stats)
+  no_composition_stations: [ Mace Head ] # stations without ion data; drawn as a hatched "Not available" bar
+  # Station -> column in ion_fractions.
+  # Narsaq column is "Na_species_PM10" (Na = Narsaq, not sodium).
+  pie_columns:
+    Narsaq: Na_species_PM10
+    Zeppelin: Zep_species
+    Villum: Vil_species
+    Jungfraujoch: JFJ_species
+  species_rows: # row label in ion_fractions -> ion name used in the figure
+    NA: Sodium
+    NO3: Nitrate
+    SO4: Sulfate
+    NH4: Ammonium
+
+plot:
+  figsize: [ 7, 4 ] # inches (width, height)
+  height_ratios: [ 1, 1 ] # top : bottom panel
+  panel_hspace: 0.08 # vertical gap between panels, fraction of axes height
+  margins: { left: 0.30, right: 0.97, top: 0.97, bottom: 0.10 } # figure fractions
+  stack_order: [ Ammonium, Sulfate, Nitrate, Sodium ] # bottom -> top in every bar
+  legend_order: [ Sodium, Nitrate, Sulfate, Ammonium ] # left -> right
+  ion_colors: # colours sampled from the original figure; they carry meaning in the community
+    Sodium: "#6911dd" # purple
+    Nitrate: "#173df5" # blue
+    Sulfate: "#ea3323" # red
+    Ammonium: "#f3ae3d" # orange
+  ion_label_colors: # colour of the percentage text inside each slice
+    Sodium: white
+    Nitrate: white
+    Sulfate: white
+    Ammonium: black
+  station_labels: # x tick labels, in the order of analysis.stations
+    - "Narsaq\nGreenland"
+    - "Zeppelin\nSvalbard"
+    - "Villum\nGreenland"
+    - "Mace Head\nIreland"
+    - "Jungfraujoch\nSwitzerland"
+  xtick_fontsize: medium # font size of station labels
+  divider: { color: "0.75", linewidth: 0.8 } # vertical separators between stations (grey level, points)
+  composition: # top panel
+    ylabel: "Composition (%)"
+    yticks: { start: 0, stop: 100, step: 25 } # percent, stop inclusive
+    bar_width: 0.62 # x-axis units
+    edge_color: w # slice outline
+    label_min_percent: 5 # slices at or below this get no text label
+    label_fontsize: 8 # points
+    label_format: "{:.0f}%"
+    not_available:
+      text: "Not\navailable"
+      hatch: "///"
+      edge_color: "0.7"
+      edge_linewidth: 0.8 # points
+      text_color: "0.35"
+      fontsize: 8 # points
+      box_alpha: 0.95 # opacity of the white box behind the text
+  concentration: # bottom panel
+    ylabel: "Aerosol number\nconcentration (cm$^{-3}$)"
+    ylim: [ 30, 6.0e+3 ] # cm-3, log axis
+    yticks: [ 100, 1000 ] # cm-3
+    yticklabels: [ "$10^2$", "$10^3$" ]
+    grid: { color: "0.7", linestyle: ":", linewidth: 0.8 } # dotted horizontal grid at the major ticks
+    box:
+      width: 0.5 # x-axis units
+      facecolor: "0.96"
+      color: "0.25" # edge, whisker and median colour
+      box_linewidth: 0.8 # points
+      line_linewidth: 1 # whisker and median line width, points
+  legend:
+    loc: upper center
+    bbox_to_anchor: [ 0.63, 1.08 ] # figure fraction
+    ncol: 4
+    handlelength: 1.1
+    handleheight: 1.1
+    labelspacing: 0.6
+    fontsize: medium
+  style: # matplotlib rcParams overriding the shared paper style (from the old figure.mplstyle)
+    font.sans-serif: [ DejaVu Sans, Arial, Helvetica ]
+    font.size: 10
+    axes.labelsize: medium
+    axes.titlesize: medium
+    xtick.labelsize: medium
+    ytick.labelsize: medium
+    legend.fontsize: medium
+    axes.linewidth: 0.7
+    lines.linewidth: 2.0
+    axes.spines.top: false
+    axes.spines.right: false
+    axes.spines.bottom: true
+    axes.edgecolor: black
+    axes.labelcolor: black
+    text.color: black
+    xtick.direction: out
+    ytick.direction: out
+    xtick.color: black
+    ytick.color: black
+    xtick.major.size: 3.5 # the shared paper style sets 0; the old figure used the matplotlib default
+    ytick.major.size: 3.5
+    legend.frameon: false
+
+output:
+  formats: [ png, pdf ]
+  dpi: 300

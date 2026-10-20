@@ -1,0 +1,98 @@
+# Configuration for plot_AEROSOL_ANOM.py
+# Annual GOME-2B absorbing aerosol index (AAI) anomaly for Narsaq, with the
+# summer-2023 Narsaq PM10 record as an inset.
+
+inputs:
+  # Paths relative to this folder
+  pm10: data/PM10-concentrations.txt # tab-separated; columns mastertime_1d (LabVIEW s), PM10_1d (ug/m3)
+  aai: data/greenfjord_timeseries_aai_anom_gome2b_2013_2024.csv # daily AAI anomaly; columns time, absorbing_aerosol_index
+  # Built from the ESA CCI GOME-2B netCDFs by archive/aai.py
+
+analysis:
+  labview_epoch: "1904-01-01" # origin of the PM10 time axis (LabVIEW time, seconds since this date)
+  who_threshold_ugm3: 45.0 # WHO PM10 24-h guideline, ug m-3; days above it are highlighted
+
+plot:
+  figsize: [ 7.5, 4 ] # width, height in inches
+  margins: { left: 0.20, right: 0.985, bottom: 0.17, top: 0.95 } # fractions of the figure
+  colors:
+    aai: "#245A8D" # AAI bars
+    exceedance: "#C54B3C" # PM10 line, exceedance points and labels, marker and connector
+    reference: "#3D3D3D" # zero line and WHO guideline line and label
+  # matplotlib rcParams overriding the shared paper style (greenfjord.viz.set_paper_style)
+  style:
+    font.sans-serif: [ DejaVu Sans, Arial, Helvetica ]
+    font.size: 10 # pt
+    axes.labelsize: medium
+    axes.titlesize: medium
+    xtick.labelsize: medium
+    ytick.labelsize: medium
+    legend.fontsize: medium
+    legend.frameon: false
+    axes.linewidth: 0.7 # pt
+    lines.linewidth: 2.0 # pt
+    axes.spines.top: false
+    axes.spines.right: false
+    axes.spines.bottom: true
+    axes.edgecolor: black
+    axes.labelcolor: black
+    text.color: black
+    xtick.direction: out
+    ytick.direction: out
+    xtick.color: black
+    ytick.color: black
+  panels:
+    aai:
+      ylabel: Integrated AAI anomaly (annual) # y-axis label
+      ylim: [ -25, 55 ] # AAI anomaly axis limits
+      bar_width: 0.85 # years
+      zero_line_width: 0.75 # pt
+      tick_width: 0.8 # pt
+      tick_length: 3 # pt
+      grid_color: white # horizontal grid lines drawn over the bars
+      grid_width: 1.2 # pt
+      grid_alpha: 0.5
+    marker: # triangle above the highest bar, marks the PM10 record period
+      style: 7 # matplotlib marker id (7 = caretdown)
+      size: 7 # pt
+      offset: 0.5 # AAI units above the highest bar
+    connector: # elbow line from the inset to the marker
+      start_axes_fraction: [ 0.78, 0.94 ] # x, y start point in the AAI axes
+      connection_style: "angle,angleA=0,angleB=90,rad=20"
+      width: 1.2 # pt
+      shrink_start: 2 # pt
+      shrink_end: 6 # pt
+      end_offset: 1 # AAI units below the marker
+    inset:
+      position: [ 0.3, 0.56, 0.48, 0.4 ] # left, bottom, width, height in axes fraction
+      facecolor: "0.98"
+      ylim: [ 0, 88 ] # ug m-3
+      extra_yticks: [ 0, 80 ] # y ticks besides the WHO threshold, ug m-3
+      line_width: 1.15 # pt
+      who_line_width: 0.75 # pt
+      who_line_dashes: [ 0, [ 3, 2 ] ] # matplotlib linestyle (offset, on/off pattern)
+      who_label: WHO guideline # text above the WHO line
+      who_label_x: 0.98 # axes fraction
+      who_label_size: small
+      point_size: 16 # pt^2, exceedance markers
+      point_edge_color: white
+      point_edge_width: 0.45 # pt
+      ylabel: "PM$_{10}$ (µg m$^{-3}$)" # y-axis label
+      ylabel_pad: 2 # pt
+      title: "Summer\n2023" # inset title (record period)
+      title_alpha: 0.5
+      title_pad: 1.5 # pt
+      title_xy: [ 0.02, 0.97 ] # axes fraction
+      tick_width: 0.65 # pt
+      tick_length: 2 # pt
+      tick_pad: 1.5 # pt
+      spine_width: 0.65 # pt
+      spine_alpha: 0.2 # top, right and bottom spines (left is opaque)
+      peak_date_format: "%-d %b" # label of each exceedance day
+      peak_label_size: medium
+      peak_label_offset: [ 2, 0 ] # points
+
+output:
+  formats: [ png, pdf ] # figure file formats
+  dpi: 300 # resolution of raster formats, dots per inch
+  pad_inches: 0.02 # padding around the tight bounding box
