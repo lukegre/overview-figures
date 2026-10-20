@@ -1,0 +1,59 @@
+# Configuration for plot_ERA_TREND_SIG.py
+# Net fraction of land pixels with a significant seasonal trend, per ERA5 variable and season.
+
+inputs:
+  # Paths relative to this folder.
+  # Monthly ERA5 (dims valid_time / latitude / longitude; variables t2m d2m tcc lcc cbh si10 msl)
+  era5: "../../data/era5_monthly_south_greenland/era5_monthly_south_greenland.nc"
+  # Region polygons; the column `index` holds "land", "ocean" or "ice"
+  region_polygons: "../../data/greenfjord_land_ocean_ice/greenfjord_land_ocean_ice.gpkg"
+
+analysis:
+  region: "land" # value of the polygon column `index` whose pixels are used ("land", "ocean" or "ice")
+  start_year: 1982 # first year of the series, calendar year
+  end_year: 2025 # last year of the series, calendar year (its DJF holds December only)
+  seasons: [ "DJF", "MAM", "JJA", "SON" ] # seasons, one column each (in this order)
+  alpha: 0.05 # Mann-Kendall p-value threshold for a significant trend, dimensionless
+  # ERA5 variable name -> label shown on the figure (rows, before sorting)
+  variables:
+    t2m: "2m temperature"
+    d2m: "Dewpoint temperature"
+    tcc: "Total cloud cover"
+    lcc: "Low cloud cover"
+    cbh: "Cloud base height"
+    si10: "10m wind speed"
+
+plot:
+  figsize: [ 4.5, 3 ] # width, height in inches
+  sort_by_mean_net_fraction: true # order rows from most positive to most negative mean net fraction
+  style: {} # matplotlib rcParams overriding the shared paper style
+  cmap: "coolwarm" # matplotlib colormap of the net fraction, negative blue to positive red
+  vmax: 100 # colour limits are -vmax..+vmax, in % of valid pixels
+  hide_below_abs: 5 # cells with an absolute net fraction below this are masked and not annotated, in %
+  background_color: "0.95" # axes background and colour of masked cells, grey level (0 black .. 1 white)
+  label_wrap_width: 20 # maximum characters per line of the wrapped row labels
+  tick_length: 0 # length of axis ticks, in points (0 hides them)
+  cell_gap_color: "white" # colour of the lines between cells
+  cell_gap_linewidth: 1.5 # width of the lines between cells, in points
+  spine_linewidth: 0.5 # width of the frame around the heat map, in points
+  spine_color: "0.7" # colour of the frame around the heat map, grey level
+  annotation:
+    font_size: 7 # size of the cell values, in points
+    font_weight: "bold" # font weight of the cell values
+    format: "{:.0f}" # Python format string of the cell value (absolute value, no sign, no decimals)
+    light_text_above_abs: 60 # cells with an absolute net fraction above this get light text, in %
+    dark_color: "black" # text colour on weak cells
+    light_color: "white" # text colour on strong cells
+  colorbar:
+    label: "Significant trend fraction\n− decreasing / + increasing" # colour bar label (two lines)
+    label_pad: -10 # distance of the label from the colour bar, in points (negative moves it closer)
+    pad: 0.02 # space between the heat map and the colour bar, as a fraction of the axes width
+    aspect: 15 # length-to-width ratio of the colour bar
+    spine_linewidth: 0.5 # width of the frame around the colour bar, in points
+    spine_color: "0.75" # colour of the frame around the colour bar, grey level
+
+output:
+  formats: [ "png" ] # figure file formats
+  dpi: 200 # resolution of raster formats, dots per inch
+  # Also write the plotted net fractions (%) as a CSV file next to the figure
+  save_csv: true
