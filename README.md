@@ -2,6 +2,12 @@
 
 Scripts and data for the figures in the GreenFjord overview paper.
 
+> [!TIP]
+> ### ▶️ Run figures from the YAML in VS Code
+> Open `figures/<folder>/config_<NAME>.yaml` and click the **▷ Run Code** button (top right). It runs the matching `plot_<NAME>.py`.
+>
+> **Requires** the recommended [Code Runner](https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner) extension. VS Code prompts you to install it when you open the repo (config in `.vscode/`). The `.venv` must exist first.
+
 - `figures/` holds one folder per figure (see [FIGURE_TEMPLATE.md](FIGURE_TEMPLATE.md)): a `plot_<NAME>.py` entry point, a `config_<NAME>.yaml`, a per-figure `README.md` and the output `fig_<NAME>.png`.
 - `data/` holds the shared input datasets, each with its own `README.md` and download script.
 - [DATA_SOURCES.md](DATA_SOURCES.md) is the full audit of every data source (IDs S1–S32, status, citations).
@@ -36,15 +42,15 @@ Status: ✅ identified · 🟡 partly identified (version, DOI or provider detai
 | **Fig 6** `fig6_GLACIER_RETREAT` | Landsat C2 L1 (S10) | USGS/NASA via Microsoft Planetary Computer | 🟡 |
 | | Sentinel-2 L2A, Aug 2024 (S12) | Copernicus Sentinel-2 data, ESA | ✅ |
 | | Esri World Imagery tiles (S13) | Esri, Maxar, Earthstar Geographics | ✅ |
-| | Glacier-front outlines and tables (S14) | GreenFjord glacier tracing | ❌ |
-| | Little Ice Age extent (S15) | unknown | ❌ |
+| | Glacier-front outlines and tables (S14) | GreenFjord cryo cluster, [glacier-retreat](https://gitlab.com/greenfjord/cryo-cluster/glacier-retreat) | 🟡 |
+| | Little Ice Age extent (S15) | GreenFjord project (internal) | ✅ |
 | **Fig 7** `fig7_AEROSOL_CONC` | Narsaq 2023 aerosol campaign (S16) | This study (Fidas Frog, PM10, ion composition) | ✅ |
 | | Particle number, Zeppelin/Villum/Mace Head/Jungfraujoch (S17) | Schmale et al. 2017, doi:10.1038/sdata.2017.3 | ✅ |
 | | Ion composition (S18) | Schmale et al. 2022, doi:10.5194/acp-22-3067-2022 | ✅ |
 | **Fig 8** `fig8_AEROSOL_ANOM` | GOME-2B Absorbing Aerosol Index (S19) | KNMI via TEMIS; Tilstra et al. 2010; de Graaf et al. 2005, doi:10.1029/2004JD005178 | ✅ |
 | | Narsaq PM10 (S16) | This study | ✅ |
-| **Fig 9** `fig9_FJORD_ICE_BARS` | Fjord ice concentration / stage of development (S20) | probably DMI ice charts (SIGRID-3) | ❌ |
-| | Fjord/glacier flux table (S21) | overview-paper tabulation | ❌ |
+| **Fig 9** `fig9_FJORD_ICE_BARS` | Fjord ice concentration / stage of development (S20) | GreenFjord cryo cluster, [fjord-ice-cover](https://gitlab.com/greenfjord/cryo-cluster/fjord-ice-cover) | 🟡 |
+| | Fjord/glacier flux table (S21) | GreenFjord project (internal), Andreas Vieli | ✅ |
 | **Fig 10** `fig10_FJORD_ICE_TIMESERIES` | Fjord ice concentration / stage of development (S20) | as Fig 9 | ❌ |
 | **Fig 11** `fig11_CTD_SECTIONS` | GF24 CTD + nutrient workbook (S27) | GreenFjord ocean cluster (internal) | ✅ |
 | | BedMachine Greenland v6 (S25) | Morlighem et al. 2025, doi:10.5067/6B6B225B8V2D | ✅ |
@@ -77,8 +83,7 @@ Status: ✅ identified · 🟡 partly identified (version, DOI or provider detai
 
 ### Open citation gaps
 
-- **Fjord ice charts (S20)**: provider not recorded; likely DMI SIGRID-3 charts.
-- **Flux table (S21)**: manual overview-paper tabulation with no embedded reference.
-- **Glacier fronts (S14) and Little Ice Age extent (S15)**: origin and authorship unknown.
+- **Fjord ice charts (S20)**: from the `fjord-ice-cover` repo; the underlying ice-chart provider (likely DMI SIGRID-3) and a repo version/commit are not recorded.
+- **Glacier fronts (S14)**: from the `glacier-retreat` repo; no version/commit recorded.
 - **ERA5 (S6)**: exact CDS request for the daily zarr not recorded.
-- **Internal datasets (S1, S16, S23, S24, S27, S29)**: no DOI yet.
+- **Internal datasets (S1, S15, S16, S21, S23, S24, S27, S29)**: no DOI yet.
