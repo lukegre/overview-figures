@@ -1,28 +1,24 @@
+"""Load figure configuration files (independent of ``settings``, needs no ``.env``)."""
+
 from pathlib import Path
 
-import dotenv
+import yaml
 
-if not dotenv.load_dotenv():
-    raise RuntimeError("Failed to load .env file. Please ensure it exists and is readable.")
 
-ROOT = str(Path(dotenv.find_dotenv("pyproject.toml")).parent)
+def get_script_name(script: str | Path) -> str:
+    """Return ``<NAME>`` for a figure script ``plot_<NAME>.py``.
 
-EPSG = 32623
-EPSG_LATLON = 4326
+    Raises FileNotFoundError if the matching ``config_<NAME>.yaml`` does not
+    exist next to the script. Call it with ``__file__``.
+    """
+    script = Path(script).resolve()
+    name = script.stem.removeprefix("plot_")
+    config = script.parent / f"config_{name}.yaml"
+    if not config.exists():
+        raise FileNotFoundError(f"No config for {script.name}: expected {config}")
+    return name
 
-BBOX_OCEAN = -52, 58, -40, 63
-BBOX_ERA5 = BBOX_OCEAN  # -60, 55, -35, 70
-BBOX_LAND = -48.21, 59.79, -44.32, 61.56
 
-TIME_START = "1982-01-01"
-TIME_END = "2021-12-31"
-
-PATH_LOCAL_DATA = "data"
-
-# save and load ERA5 data from this location on S3 bucket
-FNAME_S3_ERA5 = (
-    "simplecache::s3://spi-greenfjord-sdsc/atm/era5/era5-single_levels-monthly-1960_2024.zarr/"
-)
-FNAME_S3_GEBCO = "simplecache::s3://spi-greenfjord-sdsc/shared/bathymetry-GEBCO-2023.zarr/"
-FNAME_S3_DIST2COAST = "simplecache::s3://spi-greenfjord-sdsc/shared/dist2coast_01deg_ocean.zarr/"
-FNAME_AOI = f"{ROOT}/data/era5-land-ocean-ice.gpkg.zip"
+def read_config(path: str | Path) -> dict:
+    """Return the contents of the YAML file at ``path`` as a dict."""
+    return yaml.safe_load(Path(path).read_text())

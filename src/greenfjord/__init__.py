@@ -5,7 +5,6 @@ from loguru import logger
 from tqdm.dask import TqdmCallback
 
 from . import analysis, config, data
-from . import credentials as _credentials
 from .loggers import get_loglevel
 
 progressbar = TqdmCallback(desc="Xarray")

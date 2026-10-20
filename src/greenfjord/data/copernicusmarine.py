@@ -1,24 +1,25 @@
-import dotenv as _dotenv
+from functools import lru_cache
 from pathlib import Path as _path
+
 import copernicusmarine as _copernicusmarine
 from loguru import logger
-from functools import lru_cache
+
+from ..settings import get_env
 
 
+@lru_cache(1)
 def load_copernicusmarine_credentials():
-
-    _dotenv_loaded = _dotenv.load_dotenv()
-    if _dotenv_loaded:
-        _dotenv_fname = _dotenv.find_dotenv()
-        keys = _dotenv.dotenv_values(_dotenv_fname)
-        logger.bind(class_name='CREDS').info(f"Loaded .env file: {_dotenv_fname}")
-
+    """Log in to Copernicus Marine once (stores credentials in ~/.copernicusmarine)."""
     _credentials_path = _path("~/.copernicusmarine/.copernicusmarine-credentials")
     if not _credentials_path.expanduser().exists():
-        logger.bind(class_name='CREDS').info(f"Logging into Copernicus Marine (only once, credentials are stored in {_credentials_path})")
-        
-        _copernicusmarine.login()
-    
+        logger.bind(class_name="CREDS").info(
+            f"Logging into Copernicus Marine (only once, credentials are stored in {_credentials_path})"
+        )
+        _copernicusmarine.login(
+            username=get_env("COPERNICUSMARINE_SERVICE_USERNAME"),
+            password=get_env("COPERNICUSMARINE_SERVICE_PASSWORD"),
+        )
+
 
 def set_logger_level(level="WARNING"):
 

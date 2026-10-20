@@ -7,8 +7,8 @@ from functools import lru_cache as _lru_cache
 
 import rioxarray  # noqa: F401
 
-from ..config import BBOX_OCEAN as BBOX
-from ..config import TIME_END, TIME_START
+from ..settings import BBOX_OCEAN as BBOX
+from ..settings import TIME_END, TIME_START
 
 
 def get_sst_ice_dmi(fname=None, **query_kwargs):
@@ -148,5 +148,8 @@ def _build_filename_from_dataset(ds, dataset_id, file_format):
 def _cached_dataset_opener(**query_kwargs):
     import copernicusmarine
 
+    from .copernicusmarine import load_copernicusmarine_credentials
+
+    load_copernicusmarine_credentials()
     query_kwargs["variables"] = list(query_kwargs["variables"])  # convert to list for caching
     return copernicusmarine.open_dataset(**query_kwargs)

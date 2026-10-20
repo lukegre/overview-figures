@@ -13,3 +13,5 @@ from .utils import (
     save_figures_to_pdf,
     save_folium_as_image,
 )
+
+from .style import set_paper_style

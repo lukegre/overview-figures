@@ -141,10 +141,10 @@ def theilsen_mannkendall(
     def mannkendall_wrapper(x, y):
         x, y = _handle_nans(x, y, nan_policy)
 
-        if (nan_policy in ["omit", "drop"]) and (x.size == 0):
-            return np.full(5, np.nan)
+        if (nan_policy in ["omit", "drop"]) and (x.size < 3):
+            return np.full(6, np.nan)
 
-        slope, intercept, upper, lower = theilslopes(y, x, alpha=alpha)
+        slope, intercept, lower, upper = theilslopes(y, x, alpha=alpha)
         tau, pvalue = kendalltau(x, y, variant=variant, method=kendaltau_method)
 
         return np.array([slope, intercept, pvalue, tau, upper, lower])

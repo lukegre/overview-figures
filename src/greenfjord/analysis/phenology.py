@@ -77,8 +77,10 @@ def get_phenology_stats_single_year(mask_year: xr.DataArray, values_year: xr.Dat
     diff = mask.astype(int).diff(dim)
     assert abs(diff).sum(dim).all() <= 2, 'mask_year must have a single season or less'
 
-    out['season_start'] = (diff > 0).argmax(dim) + 1
-    out['season_end'  ] = (diff < 0).argmax(dim) + 1
+    # NaN where the year has no start / end transition (argmax would return 0 -> day 1)
+    starts, ends = diff > 0, diff < 0
+    out['season_start'] = (starts.argmax(dim) + 1).where(starts.any(dim))
+    out['season_end'  ] = (ends.argmax(dim) + 1).where(ends.any(dim))
 
     # additional stats
     if vals is not None:

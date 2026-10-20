@@ -1,4 +1,4 @@
-from ..config import FNAME_S3_ERA5, BBOX_OCEAN as BBOX
+from ..settings import FNAME_S3_ERA5, BBOX_OCEAN as BBOX
 
 pretty_names = dict(
     sp='Surface pressure',

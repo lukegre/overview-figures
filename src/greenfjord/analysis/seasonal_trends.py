@@ -22,7 +22,7 @@ def preprocess_data(da_in, clip_time=True):
     xarray.DataArray
         The resampled data array
     """
-    from ..config import TIME_END, TIME_START
+    from ..settings import TIME_END, TIME_START
 
     t0 = pd.Timestamp(TIME_START).year
     t1 = pd.Timestamp(TIME_END).year
@@ -104,7 +104,7 @@ def plot_significant_trend_direction_pos_neg(
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    from ..config import TIME_END, TIME_START
+    from ..settings import TIME_END, TIME_START
 
     t0 = pd.Timestamp(TIME_START).year
     t1 = pd.Timestamp(TIME_END).year

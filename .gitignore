@@ -11,6 +11,7 @@ wheels/
 .env
 
 **/.DS_Store
+**/cache/
 *.nc
 *.nc.*
 *.zarr
@@ -28,6 +29,7 @@ wheels/
 *.txt
 *.xlsx
 *.json
+**/data/*dat
 
 *ipynb
 
@@ -37,5 +39,8 @@ wheels/
 
 **/examples/domains.ipynb
 
-fig13-biodiversity/data/fjords/
-fig13-biodiversity/data/output_plankton_GF2023_share.tsv
+data/fjords/
+data/geoboundaries_grl_adm1/geoBoundaries-GRL-ADM1.geojson
+
+# Archived (unused) code, figures and data
+archive/

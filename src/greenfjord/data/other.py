@@ -2,12 +2,12 @@ import numpy as np
 import xarray as xr
 from loguru import logger
 from functools import lru_cache as _lru_cache
-from ..config import BBOX_OCEAN as BBOX
+from ..settings import BBOX_OCEAN as BBOX
 
 
 @_lru_cache
 def get_gebco(compute=False):
-    from ..config import FNAME_S3_GEBCO
+    from ..settings import FNAME_S3_GEBCO
 
     ds = xr.open_zarr(FNAME_S3_GEBCO)
     ds = (
@@ -27,7 +27,7 @@ def get_gebco(compute=False):
 
 @_lru_cache
 def get_dist2coast(compute=False):
-    from ..config import FNAME_S3_DIST2COAST
+    from ..settings import FNAME_S3_DIST2COAST
 
     ds = xr.open_zarr(FNAME_S3_DIST2COAST)
     ds = (

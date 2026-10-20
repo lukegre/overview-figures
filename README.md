@@ -1,62 +1,84 @@
 # GreenFjord overview-figures
 
-Scripts and data for the figures in the GreenFjord overview paper. Each `figN-*`
-folder is self-contained: an entry-point `plot_*.py` / `make_*.py` script, its input
-data under `data/`, exploratory/superseded material under `examples/`, imported
-helpers under `scripts/`, and a per-figure `README.md` documenting the figure and its
-data sources. Run any figure with the shared project environment, e.g.:
+Scripts and data for the figures in the GreenFjord overview paper.
+
+- `figures/` holds one folder per figure (see [FIGURE_TEMPLATE.md](FIGURE_TEMPLATE.md)): a `plot_<NAME>.py` entry point, a `config_<NAME>.yaml`, a per-figure `README.md` and the output `fig_<NAME>.png`.
+- `data/` holds the shared input datasets, each with its own `README.md` and download script.
+- [DATA_SOURCES.md](DATA_SOURCES.md) is the full audit of every data source (IDs S1–S32, status, citations).
+
+Run a figure from the repo root:
 
 ```bash
-MPLCONFIGDIR="$TMPDIR/mpl" uv run --project . python figN-.../plot_*.py
+MPLCONFIGDIR="$TMPDIR/mpl" .venv/bin/python figures/<folder>/plot_<NAME>.py
 ```
 
 ## Data sources & citations
 
-Consolidated provenance for every input dataset, per figure. Each figure's own
-`README.md` has the fuller description; this table is the citation summary. Entries
-marked **⚠ confirm** could not be resolved from the files, code, or repo — verify
-with the data provider before publishing.
+Summary per figure; source IDs refer to the tables in [DATA_SOURCES.md](DATA_SOURCES.md).
+Status: ✅ identified · 🟡 partly identified (version, DOI or provider detail missing) · ❌ not identified.
 
-| Figure | Product | Citation |
-|--------|---------|----------|
-| **Fig 2** — SST & 2 m air-temperature trends | Sea-surface temperature (DMI SST/sea-ice product, var `analysed_st`, via `ocean.get_sst_ice_dmi()`) | ⚠ confirm — DMI (Danish Meteorological Institute) GHRSST-style combined sea/ice-surface-temperature L4 product; exact product/version not recorded |
-| | 2 m air temperature (ERA5 `t2m`) | Hersbach, H., et al. (2020), *The ERA5 global reanalysis*, Q. J. R. Meteorol. Soc., 146, 1999–2049, doi:10.1002/qj.3803 (C3S/ECMWF) |
-| | Regional mask (bathymetry) | GEBCO Bathymetric Compilation Group — GEBCO gridded bathymetry, https://www.gebco.net/ |
-| | Glacier/fjord flux table (`fluxes_overviewpaper_tabulated.csv`) | ⚠ confirm — GreenFjord overview-paper tabulation; underlying references not recorded |
-| **Fig 3** — sea-ice cover duration anomaly | Sea-ice fraction — CMEMS/Met Office OSTIA reprocessed L4 (`METOFFICE-GLO-SST-L4-REP-OBS-SST`; `SST_GLO_SST_L4_REP_OBSERVATIONS_010_011`) | Good, S., et al. (2020), *The Current Configuration of the OSTIA System…*, Remote Sensing, 12, 720, doi:10.3390/rs12040720; E.U. Copernicus Marine Service (distributor) |
-| **Fig 4** — sea-ice & chlorophyll phenology | Chlorophyll bloom phenology (OC-CCI v6.0 ocean colour, 4 km) | Nicholson, S., Ryan-Keogh, T., Thomalla, S., Chang, N., & Smith, M. (2023), *Global Phytoplankton Phenological Indices – 4 km resolution* (v1.0) [Dataset], Zenodo, doi:10.5281/zenodo.8402932 (CC-BY-4.0) |
-| | Sea-ice concentration (constituent products) | OSI SAF, ESA CCI, CMEMS Baltic, and SMHI sea-ice concentration products (per the `source` attribute) — cite each product per its own guidance |
-| **Fig 5** — ERA5 significant-trend pixel fraction | All variables (2 m temp, dewpoint, cloud cover/base, wind, MSL, precip, `sst`, `ptype`, …) — ERA5 single levels | Hersbach, H., et al. (2020), *The ERA5 global reanalysis*, Q. J. R. Meteorol. Soc., 146, 1999–2049, doi:10.1002/qj.3803 (C3S/ECMWF). ERA5 `sst` is a prescribed boundary field from HadISST2 / OSTIA. Trend estimator & significance test **⚠ confirm** (not recorded) |
-| **Fig 6** — glacier retreat | False-colour scenes for front tracing (1973–2024) — Landsat Collection-2 Level-1 (`landsat-c2-l1`) | U.S. Geological Survey / NASA, Landsat Collection 2 (via Microsoft Planetary Computer) |
-| | True-colour basemap (Aug 2024) — Sentinel-2 L2A (`sentinel-2-l2a`) | Copernicus Sentinel-2 data, ESA (via Microsoft Planetary Computer) |
-| | Panel-(a) map tiles | Esri World Imagery (Esri, Maxar, Earthstar Geographics, GIS user community) |
-| | Glacier-front outlines, retreat & area tables | GreenFjord glacier-tracing products (this study — traced from the imagery above) |
-| | Little Ice Age extent (`LIAextenthistorical.gpkg`) | ⚠ confirm — origin not recorded in file metadata |
-| **Fig 7 & 8** — aerosol atmospheric case study | Narsaq 2023 particle number, PM10 & ion composition | This study (Fidas Frog optical particle sizer + PM10 filter analysis) |
-| | Particle number concentrations (Zeppelin, Villum, Mace Head, Jungfraujoch) | Schmale, J., et al. (2017), *Collocated observations of cloud condensation nuclei, particle size distributions, and chemical composition*, Scientific Data, 4, 170003, doi:10.1038/sdata.2017.3 |
-| | Ion composition (Zeppelin, Villum, Jungfraujoch) | Schmale, J., et al. (2022), *Pan-Arctic seasonal cycles and long-term trends of aerosol properties from 10 observatories*, Atmos. Chem. Phys., 22, 3067–3096, doi:10.5194/acp-22-3067-2022 |
-| | Absorbing aerosol index (GOME-2B, KNMI/EUMETSAT AC SAF, via TEMIS) | Tilstra, L. G., Tuinder, O. N. E., & Stammes, P. (2010), *GOME-2 Absorbing Aerosol Index: Statistical analysis…*, Proc. 2010 EUMETSAT Meteorological Satellite Conf. — algorithm: de Graaf, M., et al. (2005), J. Geophys. Res., 110, D010201, doi:10.1029/2004JD005178 |
-| **Fig 9 & 10** — ice cover & fluxes | Sea-ice concentration & stage-of-development (`fjord_ice_regions-time_series.xlsx`) | ⚠ confirm — WMO SIGRID-3 ice-chart data, most plausibly DMI Greenland ice charts; product/provider not recorded |
-| | Fjord/glacier flux table (`fluxes_overviewpaper_tabulated.csv`) | ⚠ confirm — GreenFjord overview-paper tabulation; underlying references not recorded (same table as Fig 2) |
-| | Fjord region mask (`fjord_mask.nc`, UTM 24N) | GreenFjord-derived, project-internal (⚠ confirm) |
-| **Fig 14** — tidal plain | Landsat imagery & tidal-flat mask — Landsat Collection-2 Level-2 surface reflectance (`landsat-c2-l2`) | U.S. Geological Survey / NASA, Landsat Collection 2 (via Microsoft Planetary Computer) |
-| | Tide-gauge record (Qaqortoq; downloaded from DTU Space) | Data producer: DTU Space (National Space Institute), station Qaqortoq (PSMSL 980/045). Archival/citable version — UHSLC/Joint Archive: Caldwell, P. C., Merrifield, M. A., & Thompson, P. R. (2015), NOAA NCEI, doi:10.7289/V5V40S7W |
+| Figure | Data source (ID) | Citation / provider | Status |
+|---|---|---|---|
+| **Fig 1** `fig1-MAP` | Sampling-location sheet (S1) | GreenFjord project (unversioned Google Sheet) | 🟡 |
+| | G250 topographic basemap (S2) | GEUS, Greenland G250 Topographic Map | ✅ |
+| | Natural Earth 10 m (S3) | naturalearthdata.com | ✅ |
+| | Municipal borders (S31) | geoBoundaries, Runfola et al. 2020, doi:10.1371/journal.pone.0231866 | ✅ |
+| **Fig 2** `fig2-SST_T2m_TRENDS` | DMI SST L4 `analysed_st` (S4) | DMI via CMEMS, doi:10.48670/moi-00123; Nielsen-Englyst et al. 2023, doi:10.1016/j.rse.2022.113331 | ✅ |
+| | ERA5 t2m (S6) | Hersbach et al. 2020, doi:10.1002/qj.3803 | 🟡 |
+| | DMI Narsarsuaq station (S32) | DMI Open Data metObs API (CC BY 4.0) | 🟡 |
+| | GEBCO 2023 + distance-to-coast region mask (S7) | GEBCO Compilation Group 2023, doi:10.5285/f98b053b-0cbc-6c23-e053-6c86abc0af7b; NASA OBPG distance to coast | ✅ / 🟡 |
+| | Land/ocean/ice polygons (S8) | GreenFjord-derived (internal) | ✅ |
+| **Fig 3** `fig3-DRIFT_ICE_ANOMS` | DMI SST/sea-ice L4 `sea_ice_fraction` (S4) | as Fig 2 | ✅ |
+| **Fig 4** `fig4-ICE_CHL_SEAS_DURATION` | Sea-ice duration trend from DMI L4 (S4) | as Fig 2 | ✅ |
+| | Chlorophyll bloom phenology, OC-CCI v6.0 (S9) | Nicholson et al. 2023, doi:10.5281/zenodo.8402932; ESSD 17, 1959–1975, doi:10.5194/essd-17-1959-2025 | ✅ |
+| **Fig 5** `fig5-ERA_TREND_SIG` | ERA5 single levels, monthly means (S6) | Hersbach et al. 2020, doi:10.1002/qj.3803 | 🟡 |
+| | Land polygon (S8) | GreenFjord-derived (internal) | ✅ |
+| **Fig 6** `fig6_GLACIER_RETREAT` | Landsat C2 L1 (S10) | USGS/NASA via Microsoft Planetary Computer | 🟡 |
+| | Sentinel-2 L2A, Aug 2024 (S12) | Copernicus Sentinel-2 data, ESA | ✅ |
+| | Esri World Imagery tiles (S13) | Esri, Maxar, Earthstar Geographics | ✅ |
+| | Glacier-front outlines and tables (S14) | GreenFjord glacier tracing | ❌ |
+| | Little Ice Age extent (S15) | unknown | ❌ |
+| **Fig 7** `fig7_AEROSOL_CONC` | Narsaq 2023 aerosol campaign (S16) | This study (Fidas Frog, PM10, ion composition) | ✅ |
+| | Particle number, Zeppelin/Villum/Mace Head/Jungfraujoch (S17) | Schmale et al. 2017, doi:10.1038/sdata.2017.3 | ✅ |
+| | Ion composition (S18) | Schmale et al. 2022, doi:10.5194/acp-22-3067-2022 | ✅ |
+| **Fig 8** `fig8_AEROSOL_ANOM` | GOME-2B Absorbing Aerosol Index (S19) | KNMI via TEMIS; Tilstra et al. 2010; de Graaf et al. 2005, doi:10.1029/2004JD005178 | ✅ |
+| | Narsaq PM10 (S16) | This study | ✅ |
+| **Fig 9** `fig9_FJORD_ICE_BARS` | Fjord ice concentration / stage of development (S20) | probably DMI ice charts (SIGRID-3) | ❌ |
+| | Fjord/glacier flux table (S21) | overview-paper tabulation | ❌ |
+| **Fig 10** `fig10_FJORD_ICE_TIMESERIES` | Fjord ice concentration / stage of development (S20) | as Fig 9 | ❌ |
+| **Fig 11** `fig11_CTD_SECTIONS` | GF24 CTD + nutrient workbook (S27) | GreenFjord ocean cluster (internal) | ✅ |
+| | BedMachine Greenland v6 (S25) | Morlighem et al. 2025, doi:10.5067/6B6B225B8V2D | ✅ |
+| | Fjord centreline geometry (S26) | Separate `greenland-fjord-properties` repo | ✅ |
+| **Fig 12** `fig12_FISH` | Fish landings, FIX012 (S22) | Statistics Greenland StatBank, accessed 2024-11-12 | ✅ |
+| | eDNA MiFish 12S and EukAtara 18S (S23, S24) | GreenFjord project (internal) | 🟡 |
+| | BedMachine v6 (S25), fjord geometry (S26) | as Fig 11 | ✅ |
+| **Fig 13** `fig13_SEDIMENT_DELIVERY` | Landsat C2 L2 SR (S11) | USGS/NASA via Microsoft Planetary Computer | ✅ |
+| | Qaqortoq tide gauge (S28) | DTU Space; Caldwell et al. 2015, doi:10.7289/V5V40S7W | 🟡 |
+| | Turbidity and ablatometer loggers (S29) | GreenFjord field sensors (Ian Delaney, 2023) | 🟡 |
+| | Jespersen Bræ discharge (S30) | Mankoff et al. 2020, doi:10.5194/essd-12-2811-2020 | ✅ |
+| **Fig S** `figS_SST_TREND_PERIODS` | DMI SST L4 (S4); GEBCO region mask (S7) | as Fig 2 | ✅ / 🟡 |
+| **Fig S** `figS_SEAICE_PHENOL` | DMI L4 `sea_ice_fraction` (S4) | as Fig 2 | ✅ |
+| **Fig S** `figS_T2M_TREND_PERIODS` | ERA5 t2m daily (S6); polygons (S8) | as Fig 2 | 🟡 / ✅ |
+| **Table S** `tableS-era5_seasonal_trends` | ERA5 daily (S6); polygons (S8) | as Fig 2 (notebook unfinished) | 🟡 |
+
+### Shared datasets in `data/`
+
+| Folder | Content |
+|---|---|
+| `dmi_metobs_narsarsuaq` | DMI Narsarsuaq station observations (S32) |
+| `era5_monthly_south_greenland` | ERA5 monthly means from CDS (S6) |
+| `fjord_bathymetry` | BedMachine fjord sections (S25) |
+| `fjord_ice_regions_monthly` | Fjord ice-chart workbook (S20) |
+| `geoboundaries_grl_adm1` | Greenland municipal borders (S31) |
+| `greenfjord_land_ocean_ice` | Land/ocean/ice polygons (S8) |
+| `ocean_regions_mask` | GEBCO + distance-to-coast region mask (S7) |
+| `sea_ice_dmioi_daily` | Daily DMI sea-ice fraction (S4) |
+| `sst_dmioi_monthly` | Monthly DMI SST (S4) |
 
 ### Open citation gaps
 
-The **⚠ confirm** rows above need input that isn't in the repo:
-
-- **DMI SST product (Fig 2)** — pinned to `ocean.get_sst_ice_dmi()` in the
-  `greenfjord_trends` package, which isn't installed here; the exact CMEMS/DMI
-  product id is unknown until that code is available.
-- **Fjord/glacier flux table (Fig 2 & 9/10)** — a manual overview-paper tabulation
-  with no embedded reference.
-- **Sea-ice concentration / stage-of-development (Fig 9/10)** — structurally an
-  operational ice-chart product (WMO SIGRID-3); DMI is the likely provider but is
-  not recorded in the file.
-- **Little Ice Age extent (Fig 6)** — single extent line, no source metadata.
-- **Trend/significance method (Fig 5)** — only the resulting pixel fractions are
-  stored, not the estimator or test.
-
-Everything else is resolved from the download code, dataset metadata, or the product
-identifiers embedded in the scripts.
+- **Fjord ice charts (S20)**: provider not recorded; likely DMI SIGRID-3 charts.
+- **Flux table (S21)**: manual overview-paper tabulation with no embedded reference.
+- **Glacier fronts (S14) and Little Ice Age extent (S15)**: origin and authorship unknown.
+- **ERA5 (S6)**: exact CDS request for the daily zarr not recorded.
+- **Internal datasets (S1, S16, S23, S24, S27, S29)**: no DOI yet.
