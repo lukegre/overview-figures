@@ -1,0 +1,97 @@
+# Configuration for plot_GLACIER_RETREAT.py
+# Glacier-front retreat around Qalerallit / Naajat Sermiat (South Greenland):
+# (a) total retreat per glacier as bars above a satellite map of the glacier outlines,
+# (b) year-coloured front outlines of one glacier over a Sentinel-2 scene.
+
+inputs:
+  # Paths relative to this folder.
+  retreat_csv: data/glacier_retreat.csv # cumulative front retreat per glacier (columns glacier_NN) and year (rows), km
+  outlines_gpkg: data/glacier_outline-rectangles.gpkg # near-rectangular glacier outlines, one per glacier (id) and year, EPSG:32623
+  lia_gpkg: data/LIAextenthistorical.gpkg # Little Ice Age extent line, EPSG:4326
+  fronts_old_shp: data/glacier_i16n6104w4669/glacier_i16n6104w4669-landsat_l1-1973_1985-handdrawn_v2.shp # hand-drawn front polygons 1973-1985, EPSG:32623
+  fronts_new_gpkg: data/glacier_i16n6104w4669/glacier_i16n6104w4669_poly-manually_adjusted.gpkg # traced + adjusted front polygons 1992-2024, EPSG:32623
+  sentinel2_tif: data/glacier_i16n6104w4669/glacier_i16n6104w4669_sentinel2-truecolor-2024-08.tif # true-colour Sentinel-2 scene, red/green/blue reflectance 0-1, EPSG:32623
+
+analysis:
+  # Panel (a): retreat per glacier
+  retreat_unit: "km" # "km" (native) or "m"; sets bar values and the y-axis label
+  exclude_ids: [ 18 ] # source glacier ids dropped from the whole figure; the rest are renumbered
+  label_start: 1 # first glacier number shown in the figure
+  reverse_labels: true # true: glacier number 1 is the highest source id
+  glacier_cmap: "Spectral_r" # colormap encoding the glacier number (number 1 = purple, last = red)
+  # Panel (b): front outlines
+  drop_year: 2024 # last outline dropped (partial / mismatched trace), calendar year
+  clip_trim_west_m: 700 # trim of the shared clip rectangle on the west edge, m
+  clip_trim_east_m: 700 # trim of the shared clip rectangle on the east edge, m
+  clip_extend_south_m: 3000 # extension of the shared clip rectangle to the south, m
+  clip_top_northing_m: 6772000 # boundaries north of this UTM northing are clipped off (drops the ice-cap edge), m
+  min_front_length_m: 10000 # only the longest boundary segment longer than this is kept as the front, m
+
+plot:
+  figsize: [ 12, 8 ] # width, height in inches
+  width_ratios: [ 1, 1 ] # relative widths of panel (a) and (b)
+  wspace: 0.05 # horizontal space between panels, fraction of panel width
+  label_fontsize: 12 # panel labels, axis labels and colour-bar label, pt
+  number_fontsize: 10 # glacier numbers (bars and map), colour-bar ticks, legend text, pt
+  panel_label_pad: 0.02 # offset of panel labels from the lower-left corner, axes fraction
+  panel_label_box: { boxstyle: "round,pad=0.3", fc: "0.2", ec: "none", alpha: 0.6 } # backing box of panel labels and legend (fc/alpha reused for the legend frame)
+  panel_a:
+    label: "a) Glacier locations" # panel label
+    height_ratios: [ 1, 2.4 ] # bar plot : map height ratio
+    hspace: 0.0 # space between bar plot and map, fraction of height
+    ylabel: "Retreat distance" # y-axis label, unit appended in brackets
+    sort_bars_by: "number" # "number" (1 left to N right) or "retreat" (largest first)
+    bar_width: 0.9 # bar width, fraction of bar spacing
+    bar_edgecolor: "0.25" # bar edge colour
+    bar_edge_width: 0.6 # bar edge width, pt
+    zero_line_color: "0.4" # colour of the zero line
+    zero_line_width: 0.8 # width of the zero line, pt
+    number_pad_frac: 0.01 # gap between bar top and glacier number, fraction of the largest bar
+    number_color: "0.15" # colour of the glacier numbers above bars
+    margins_x: 0.01 # horizontal padding of the bar axis, fraction of data range
+    headroom: 1.08 # y-axis upper limit relative to the automatic limit (room for the numbers)
+    map_pad_frac: 0.08 # padding around the glacier outlines on the map, fraction of extent
+    exclude_from_map: [ ] # glacier numbers omitted from the map only (bars keep them)
+    map_epsg: 3857 # CRS of the map (matches the web-tile basemap)
+    marine_terminating: [ 1, 2, 3, 4, 5, 7, 15, 16 ] # glacier numbers drawn with a circle marker (others get a rounded box)
+    black_label_numbers: [ 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ] # map numbers drawn with black text (legible on light markers)
+    black_label_alpha: 0.7 # opacity of black map numbers (marker stays opaque)
+    marker_pad: 0.2 # padding of the number marker, fraction of font size
+    marker_edge_color: "white" # marker edge colour
+    marker_edge_width: 1.4 # marker edge width, pt
+    marker_shadow_offset: [ 1.5, -1.5 ] # marker drop-shadow offset, pt (x, y)
+    marker_shadow_alpha: 0.5 # marker drop-shadow opacity
+    highlight_bbox_lonlat: [ -46.804692, 60.972829, -46.588195, 61.087028 ] # box marking the extent of panel (b): minx, miny, maxx, maxy, degrees
+    highlight_outer: { edgecolor: "black", linewidth: 5.0, alpha: 0.4 } # wide translucent shadow line of the box (linewidth in pt)
+    highlight_inner: { edgecolor: "white", linewidth: 3.0 } # inner line of the box (linewidth in pt)
+    basemap_provider: "Esri.WorldImagery" # contextily tile provider (dotted path in contextily.providers); needs network
+    basemap_attribution: "" # attribution text of the basemap ("" hides it)
+    basemap_attribution_size: 0 # attribution font size, pt
+  panel_b:
+    label: "b) Qalerallit / Naajat Sermiat glaciers" # panel label
+    front_cmap: "inferno_r" # colormap of the fronts by year (light = oldest)
+    front_linewidth: 2.5 # front and Little Ice Age line width, pt
+    front_alpha: 0.7 # opacity of the fronts
+    clip_north_frac: 0.055 # fraction of the scene's north (top) extent cut off so the colour bar lines up with panel (a)
+    lia_label: "Little Ice Age extent" # legend label of the Little Ice Age line
+    lia_color: "white" # colour of the Little Ice Age line
+    lia_linestyle: "--" # line style of the Little Ice Age line
+    lia_alpha: 0.5 # opacity of the Little Ice Age line
+    lia_zorder: 6 # drawing order of the Little Ice Age line
+    legend_loc: "upper left" # legend position
+    legend_text_color: "white" # legend text colour
+    cbar_label: "Year" # colour-bar label
+    cbar_inset: [ 0.0, 1.02, 1.0, 0.025 ] # colour-bar position above the panel: x, y, width, height, axes fraction
+  # matplotlib rcParams overriding the shared paper style: restores the matplotlib
+  # defaults this figure was made with (the paper style uses 8 pt, thin spines, no ticks)
+  style:
+    font.size: 10 # pt
+    axes.linewidth: 0.8 # pt
+    xtick.major.size: 3.5 # pt
+    ytick.major.size: 3.5 # pt
+    xtick.major.width: 0.8 # pt
+    ytick.major.width: 0.8 # pt
+
+output:
+  formats: [ "png" ] # figure file formats
+  dpi: 200 # resolution of raster formats, dots per inch
