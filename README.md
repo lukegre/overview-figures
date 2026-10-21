@@ -51,7 +51,7 @@ Status: ✅ identified · 🟡 partly identified (version, DOI or provider detai
 | | Narsaq PM10 (S16) | This study | ✅ |
 | **Fig 9** `fig9_FJORD_ICE_BARS` | Fjord ice concentration / stage of development (S20) | GreenFjord cryo cluster, [fjord-ice-cover](https://gitlab.com/greenfjord/cryo-cluster/fjord-ice-cover) | 🟡 |
 | | Fjord/glacier flux table (S21) | GreenFjord project (internal), Andreas Vieli | ✅ |
-| **Fig 10** `fig10_FJORD_ICE_TIMESERIES` | Fjord ice concentration / stage of development (S20) | as Fig 9 | ❌ |
+| **Fig 10** `fig10_FJORD_ICE_TIMESERIES` | Fjord ice concentration / stage of development (S20) | as Fig 9 | 🟡 |
 | **Fig 11** `fig11_CTD_SECTIONS` | GF24 CTD + nutrient workbook (S27) | GreenFjord ocean cluster (internal) | ✅ |
 | | BedMachine Greenland v6 (S25) | Morlighem et al. 2025, doi:10.5067/6B6B225B8V2D | ✅ |
 | | Fjord centreline geometry (S26) | Separate `greenland-fjord-properties` repo | ✅ |
