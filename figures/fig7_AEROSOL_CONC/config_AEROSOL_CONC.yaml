@@ -17,7 +17,8 @@ analysis:
     Zeppelin: Zep_species
     Villum: Vil_species
     Jungfraujoch: JFJ_species
-  species_rows: # row label in ion_fractions -> ion name used in the figure
+  species_rows:
+    # row label in ion_fractions -> ion name used in the figure
     NA: Sodium
     NO3: Nitrate
     SO4: Sulfate
@@ -26,17 +27,19 @@ analysis:
 plot:
   figsize: [ 7.5, 4.5 ] # inches (width, height)
   ion_order: [ Sodium, Nitrate, Sulfate, Ammonium ] # pie slice order (clockwise) and legend order
-  ion_colors: # colours sampled from the original figure; they carry meaning in the community
+  ion_colors:
+    # colours sampled from the original figure; they carry meaning in the community
     Sodium: "#6911dd" # purple
     Nitrate: "#173df5" # blue
     Sulfate: "#ea3323" # red
     Ammonium: "#f3ae3d" # orange
-  station_labels: # x tick labels, in the order of analysis.stations
-    - "Narsaq\nGreenland"
-    - "Zeppelin\nSvalbard"
-    - "Villum\nGreenland"
-    - "Mace Head\nIreland"
-    - "Jungfraujoch\nSwitzerland"
+  station_labels:
+  # x tick labels, in the order of analysis.stations
+  - "Narsaq\nGreenland"
+  - "Zeppelin\nSvalbard"
+  - "Villum\nGreenland"
+  - "Mace Head\nIreland"
+  - "Jungfraujoch\nSwitzerland"
   xtick_fontsize: 11 # points
   xtick_fontweight: 100 # font weight of station labels (numeric, as in the original)
   ylabel: "number concentration (cm$^{-3}$)"
@@ -69,7 +72,8 @@ plot:
     loc: upper right
     bbox_to_anchor: [ 0.99, 0.99 ] # axes fraction
     weight: bold # font weight; each name is printed in its ion colour
-  style: # matplotlib rcParams overriding the shared paper style (from the old figure.mplstyle)
+  style:
+    # matplotlib rcParams overriding the shared paper style (from the old figure.mplstyle)
     font.sans-serif: [ DejaVu Sans, Arial, Helvetica ]
     font.size: 10
     axes.labelsize: medium
@@ -95,4 +99,4 @@ plot:
 
 output:
   formats: [ png, pdf ]
-  dpi: 300
+  dpi: 150

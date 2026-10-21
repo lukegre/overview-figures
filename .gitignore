@@ -47,3 +47,6 @@ archive/
 
 !.vscode/extensions.json
 !.vscode/settings.json
+!figures/**/*.png
+
+**/examples/*.png

@@ -51,7 +51,7 @@ plot:
     margins_x: 0.01 # horizontal padding of the bar axis, fraction of data range
     headroom: 1.08 # y-axis upper limit relative to the automatic limit (room for the numbers)
     map_pad_frac: 0.08 # padding around the glacier outlines on the map, fraction of extent
-    exclude_from_map: [ ] # glacier numbers omitted from the map only (bars keep them)
+    exclude_from_map: [] # glacier numbers omitted from the map only (bars keep them)
     map_epsg: 3857 # CRS of the map (matches the web-tile basemap)
     marine_terminating: [ 1, 2, 3, 4, 5, 7, 15, 16 ] # glacier numbers drawn with a circle marker (others get a rounded box)
     black_label_numbers: [ 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ] # map numbers drawn with black text (legible on light markers)
@@ -94,4 +94,4 @@ plot:
 
 output:
   formats: [ "png" ] # figure file formats
-  dpi: 200 # resolution of raster formats, dots per inch
+  dpi: 150 # resolution of raster formats, dots per inch

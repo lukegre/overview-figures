@@ -11,15 +11,15 @@ plot:
   # Fjords drawn in every panel. `workbook_name` is the exact header string in the workbook,
   # `label` the legend text, `color` the line colour
   fjords:
-    - { workbook_name: "Sermelik - Ikersuaq", label: "Sermilik Ikersuaq", color: "#2C7FB8" }
-    - { workbook_name: "Tunuliarfik", label: "Tunulliarfik", color: "#9E3D88" }
-    - { workbook_name: "Igalikup Kangerlua", label: "Igalikup Kangerlua", color: "#D55E4B" }
+  - { workbook_name: "Sermelik - Ikersuaq", label: "Sermilik Ikersuaq", color: "#2C7FB8" }
+  - { workbook_name: "Tunuliarfik", label: "Tunulliarfik", color: "#9E3D88" }
+  - { workbook_name: "Igalikup Kangerlua", label: "Igalikup Kangerlua", color: "#D55E4B" }
   # Fjord zones, one panel each (top to bottom). `workbook_name` is the exact
   # workbook string ("Inner " has a trailing space), `label` the panel title
   regions:
-    - { workbook_name: "Inner ", label: "Inner", panel_letter: "a" }
-    - { workbook_name: "Mid", label: "Mid", panel_letter: "b" }
-    - { workbook_name: "Outer", label: "Outer", panel_letter: "c" }
+  - { workbook_name: "Inner ", label: "Inner", panel_letter: "a" }
+  - { workbook_name: "Mid", label: "Mid", panel_letter: "b" }
+  - { workbook_name: "Outer", label: "Outer", panel_letter: "c" }
   fjord_linewidth: 2.5 # pt, fjord lines
   # Coastal-ocean reference series, added to the last panel
   coastal_ocean:

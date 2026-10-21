@@ -17,9 +17,9 @@ analysis:
   trend_unit_per_years: 10 # trends are reported per this many years (10 = per decade)
   # SST regions (IDs of the ocean region mask), drawn in this order
   sst_regions:
-    - { id: 1, name: "Oceanic", color: "C0" } # id: mask value; name: region name; color: matplotlib colour
-    - { id: 2, name: "Southwest", color: "C1" }
-    - { id: 4, name: "South Eastern", color: "C3" }
+  - { id: 1, name: "Oceanic", color: "C0" } # id: mask value; name: region name; color: matplotlib colour
+  - { id: 2, name: "Southwest", color: "C1" }
+  - { id: 4, name: "South Eastern", color: "C3" }
   # Shelf regions are refitted from start_year on (same result as the full fit when the
   # series starts that year); their trend line is only drawn from that year
   shelf_refit:
@@ -27,8 +27,8 @@ analysis:
     start_year: 1982 # first year used for the refit (calendar year)
   # ERA5 t2m regions (raster values of the land/ocean/ice polygons: land 1, ocean 2, ice 3)
   t2m_regions:
-    - { id: 1, name: "GreenFjord", color: "0.55" } # id: polygon raster value; color: matplotlib grey string
-    - { id: 2, name: "Southwest", color: "C1" }
+  - { id: 1, name: "GreenFjord", color: "0.55" } # id: polygon raster value; color: matplotlib grey string
+  - { id: 2, name: "Southwest", color: "C1" }
   # Station series plotted as a third line in panel (c) and as a marker on the map
   station:
     name: "Narsarsuaq" # label in the map legend
@@ -117,5 +117,5 @@ plot:
 
 output:
   formats: [ "png", "pdf" ] # figure file formats
-  dpi: 300 # resolution of raster formats and rasterised elements of the PDF, dots per inch
+  dpi: 150 # resolution of raster formats and rasterised elements of the PDF, dots per inch
   transparent_png: true # transparent background for the PNG (the PDF is saved opaque)

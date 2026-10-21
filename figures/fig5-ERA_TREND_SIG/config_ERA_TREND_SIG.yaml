@@ -45,7 +45,9 @@ plot:
     dark_color: "black" # text colour on weak cells
     light_color: "white" # text colour on strong cells
   colorbar:
-    label: "Significant trend fraction\n− decreasing / + increasing" # colour bar label (two lines)
+    label: "Significant trend fraction
+
+      − decreasing / + increasing" # colour bar label (two lines)
     label_pad: -10 # distance of the label from the colour bar, in points (negative moves it closer)
     pad: 0.02 # space between the heat map and the colour bar, as a fraction of the axes width
     aspect: 15 # length-to-width ratio of the colour bar
@@ -54,6 +56,6 @@ plot:
 
 output:
   formats: [ "png" ] # figure file formats
-  dpi: 200 # resolution of raster formats, dots per inch
+  dpi: 150 # resolution of raster formats, dots per inch
   # Also write the plotted net fractions (%) as a CSV file next to the figure
   save_csv: true

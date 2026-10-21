@@ -62,7 +62,9 @@ plot:
       extend: "neither" # colourbar arrows: "neither", "min", "max" or "both"
       cmap: "Blues" # matplotlib colour map
       # {pct} is replaced by analysis.ice_day_fraction in %
-      cbar_label: "Mean days per season\nwith ice cover > {pct:g}%"
+      cbar_label: "Mean days per season
+
+        with ice cover > {pct:g}%"
       cbar_ticks: [ 0, 30, 60, 90 ] # days, colourbar tick positions
     # Bottom row: trends, diverging colour scale from -vlim to vlim
     trends:
@@ -75,4 +77,4 @@ plot:
 
 output:
   formats: [ "png", "pdf" ] # figure file formats
-  dpi: 300 # resolution of raster formats, dots per inch
+  dpi: 150 # resolution of raster formats, dots per inch

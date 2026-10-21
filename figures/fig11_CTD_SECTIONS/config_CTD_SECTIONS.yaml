@@ -142,57 +142,59 @@ plot:
   # The workbook calls these eastern/western; the project terminology is
   # land/glacial fjord. Distance increases from the innermost station seaward
   transects:
-    - data_name: "eastern" # value of the workbook's FEJORD column
-      label: "Land fjord" # column title
-      ylabel: "Depth (m)"
-      fjord_num: 56 # fjord number of the bathymetry file
-      xlim: [ 0, 50 ] # km, or "data" to use the station distance extent
-      xticks: [ 0, 10, 20, 30, 40, 50 ] # km
-      ylim: [ 450, 0 ] # m, bottom, top
-      yticks: [ 100, 200, 300, 400 ] # m, ticks of the lower axes (those above depth_split.depth_m)
-    - data_name: "western"
-      label: "Glacial fjord"
-      ylabel: ""
-      fjord_num: 54
-      xlim: [ 0, 90 ] # km, or "data" to use the station distance extent
-      xticks: [ 0, 20, 40, 60, 80 ] # km
-      ylim: [ 700, 0 ] # m, bottom, top
-      yticks: [ 0, 200, 400, 600 ] # m
+  - data_name: "eastern" # value of the workbook's FEJORD column
+    label: "Land fjord" # column title
+    ylabel: "Depth (m)"
+    fjord_num: 56 # fjord number of the bathymetry file
+    xlim: [ 0, 50 ] # km, or "data" to use the station distance extent
+    xticks: [ 0, 10, 20, 30, 40, 50 ] # km
+    ylim: [ 450, 0 ] # m, bottom, top
+    yticks: [ 100, 200, 300, 400 ] # m, ticks of the lower axes (those above depth_split.depth_m)
+  - data_name: "western"
+    label: "Glacial fjord"
+    ylabel: ""
+    fjord_num: 54
+    xlim: [ 0, 90 ] # km, or "data" to use the station distance extent
+    xticks: [ 0, 20, 40, 60, 80 ] # km
+    ylim: [ 700, 0 ] # m, bottom, top
+    yticks: [ 0, 200, 400, 600 ] # m
   # Colour limits are explicit so the two fjords can be compared directly.
   # Values outside the limits are retained and shown by extended colour bars
   variables:
-    - column: "Potential_Temperature" # workbook column
-      colorbar_label: "Potential temperature (°C)"
-      cmap: "RdYlBu_r"
-      limits: [ -1, 7 ] # °C, colour range
-      levels: 17 # number of contour boundaries
-      ticks: [ -1, 1, 3, 5, 7 ] # °C, colour-bar ticks
-      show_samples: false # draw bottle-sample dots
-    - column: "Salinity"
-      colorbar_label: "Salinity"
-      cmap: "cmo.haline"
-      limits: [ 28, 35 ] # colour range
-      levels: 15 # number of contour boundaries
-      ticks: [ 28, 30, 32, 34 ] # colour-bar ticks
-      show_samples: false
-    - column: "DIN"
-      # trailing space after "Nitrogen" is kept to reproduce the original label placement
-      colorbar_label: "Dissolved Inorganic Nitrogen \n(µmol L⁻¹)"
-      cmap: "cmo.matter"
-      limits: [ 0, 16 ] # µmol L-1, colour range
-      levels: 15 # number of contour boundaries
-      ticks: [ 0, 4, 8, 12, 16 ] # µmol L-1, colour-bar ticks
-      show_samples: true
-    - column: "Chla"
-      colorbar_label: |
-        Chlorophyll fluorescence
-        (relative units)
-      cmap: "cmo.algae"
-      limits: [ 2, 20 ] # relative units, colour range
-      levels: 12 # number of contour boundaries
-      ticks: [ 2, 6, 10, 14, 18 ] # relative units, colour-bar ticks
-      show_samples: false
+  - column: "Potential_Temperature" # workbook column
+    colorbar_label: "Potential temperature (°C)"
+    cmap: "RdYlBu_r"
+    limits: [ -1, 7 ] # °C, colour range
+    levels: 17 # number of contour boundaries
+    ticks: [ -1, 1, 3, 5, 7 ] # °C, colour-bar ticks
+    show_samples: false # draw bottle-sample dots
+  - column: "Salinity"
+    colorbar_label: "Salinity"
+    cmap: "cmo.haline"
+    limits: [ 28, 35 ] # colour range
+    levels: 15 # number of contour boundaries
+    ticks: [ 28, 30, 32, 34 ] # colour-bar ticks
+    show_samples: false
+  - column: "DIN"
+    # trailing space after "Nitrogen" is kept to reproduce the original label placement
+    colorbar_label: "Dissolved Inorganic Nitrogen\ 
+
+      (µmol L⁻¹)"
+    cmap: "cmo.matter"
+    limits: [ 0, 16 ] # µmol L-1, colour range
+    levels: 15 # number of contour boundaries
+    ticks: [ 0, 4, 8, 12, 16 ] # µmol L-1, colour-bar ticks
+    show_samples: true
+  - column: "Chla"
+    colorbar_label: |
+      Chlorophyll fluorescence
+      (relative units)
+    cmap: "cmo.algae"
+    limits: [ 2, 20 ] # relative units, colour range
+    levels: 12 # number of contour boundaries
+    ticks: [ 2, 6, 10, 14, 18 ] # relative units, colour-bar ticks
+    show_samples: false
 
 output:
   formats: [ png, pdf ] # figure file formats
-  dpi: 300 # resolution of raster formats, dots per inch
+  dpi: 150 # resolution of raster formats, dots per inch

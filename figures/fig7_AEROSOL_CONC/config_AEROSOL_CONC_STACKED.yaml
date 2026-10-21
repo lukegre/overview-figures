@@ -18,7 +18,8 @@ analysis:
     Zeppelin: Zep_species
     Villum: Vil_species
     Jungfraujoch: JFJ_species
-  species_rows: # row label in ion_fractions -> ion name used in the figure
+  species_rows:
+    # row label in ion_fractions -> ion name used in the figure
     NA: Sodium
     NO3: Nitrate
     SO4: Sulfate
@@ -31,25 +32,29 @@ plot:
   margins: { left: 0.30, right: 0.97, top: 0.97, bottom: 0.10 } # figure fractions
   stack_order: [ Ammonium, Sulfate, Nitrate, Sodium ] # bottom -> top in every bar
   legend_order: [ Sodium, Nitrate, Sulfate, Ammonium ] # left -> right
-  ion_colors: # colours sampled from the original figure; they carry meaning in the community
+  ion_colors:
+    # colours sampled from the original figure; they carry meaning in the community
     Sodium: "#6911dd" # purple
     Nitrate: "#173df5" # blue
     Sulfate: "#ea3323" # red
     Ammonium: "#f3ae3d" # orange
-  ion_label_colors: # colour of the percentage text inside each slice
+  ion_label_colors:
+    # colour of the percentage text inside each slice
     Sodium: white
     Nitrate: white
     Sulfate: white
     Ammonium: black
-  station_labels: # x tick labels, in the order of analysis.stations
-    - "Narsaq\nGreenland"
-    - "Zeppelin\nSvalbard"
-    - "Villum\nGreenland"
-    - "Mace Head\nIreland"
-    - "Jungfraujoch\nSwitzerland"
+  station_labels:
+  # x tick labels, in the order of analysis.stations
+  - "Narsaq\nGreenland"
+  - "Zeppelin\nSvalbard"
+  - "Villum\nGreenland"
+  - "Mace Head\nIreland"
+  - "Jungfraujoch\nSwitzerland"
   xtick_fontsize: medium # font size of station labels
   divider: { color: "0.75", linewidth: 0.8 } # vertical separators between stations (grey level, points)
-  composition: # top panel
+  composition:
+    # top panel
     ylabel: "Composition (%)"
     yticks: { start: 0, stop: 100, step: 25 } # percent, stop inclusive
     bar_width: 0.62 # x-axis units
@@ -65,8 +70,11 @@ plot:
       text_color: "0.35"
       fontsize: 8 # points
       box_alpha: 0.95 # opacity of the white box behind the text
-  concentration: # bottom panel
-    ylabel: "Aerosol number\nconcentration (cm$^{-3}$)"
+  concentration:
+    # bottom panel
+    ylabel: "Aerosol number
+
+      concentration (cm$^{-3}$)"
     ylim: [ 30, 6.0e+3 ] # cm-3, log axis
     yticks: [ 100, 1000 ] # cm-3
     yticklabels: [ "$10^2$", "$10^3$" ]
@@ -85,7 +93,8 @@ plot:
     handleheight: 1.1
     labelspacing: 0.6
     fontsize: medium
-  style: # matplotlib rcParams overriding the shared paper style (from the old figure.mplstyle)
+  style:
+    # matplotlib rcParams overriding the shared paper style (from the old figure.mplstyle)
     font.sans-serif: [ DejaVu Sans, Arial, Helvetica ]
     font.size: 10
     axes.labelsize: medium
@@ -111,4 +120,4 @@ plot:
 
 output:
   formats: [ png, pdf ]
-  dpi: 300
+  dpi: 150

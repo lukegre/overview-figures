@@ -37,7 +37,8 @@ analysis:
     # split between G. morhua and G. ogac at 12S resolution) falls into "Other".
     # The two sequences in `gadus_morhua_sequences` are re-assigned to G. morhua,
     # following the correction in archive/examples/edna_plot.R.
-    gadus_morhua_sequences: # 12S sequences re-assigned to Gadus morhua
+    gadus_morhua_sequences:
+    # 12S sequences re-assigned to Gadus morhua
     - CACCGCGGTTATACGAGAGGCCCAAATTGATGAAGAACGGCGTAAAGCGTGGTTAAGAAAAAAGAGAAAATATGGCCGAACAGCTTCAAAGCAGTTATACGCATCCGAAGTCACGAAGAACAATCACGAAAGTTGCCCTAAAACCTCCGATTCCACGAGAGCCATAAAA
     - CACCGCGGTTATACGAGAGGCCCTAATTGATGAAGAACGGCGTAAAGCGTGGTTAAGAAAAAAGAGAAAATATGGCCGAACAGCTTCAAAGCAGTTATACGCATCCGAAGTCACGAAGAACAATCACGAAAGTTGCCCTAAAACCTCCGATTCCACGAAAGCCATAAAA
     fish_groups:
@@ -62,7 +63,8 @@ analysis:
     # the catchment rather than at the present-day terminus).
     distance_from_centerline: true
     centerline_grid_m: 500.0 # spacing of the cross-fjord polygons along the centreline, m
-    manual_distance_km: # hand-digitised station distance from the glacier, km, keyed by station letter
+    manual_distance_km:
+      # hand-digitised station distance from the glacier, km, keyed by station letter
       B: 27
       D: 57
       K: 92
@@ -129,20 +131,24 @@ plot:
   legend_line_scale: 2 # legend line swatches are this much thicker than the plotted lines (factor)
   panel_label_y: 1.02 # height of the panel label above its axes, axes fraction
   panel_label_sep: 6 # gap between the bold "(a)" and the description, points
-  legend_titles: # bold titles left of the eDNA swatch rows
+  legend_titles:
+    # bold titles left of the eDNA swatch rows
     fish: "Fish"
     plankton: "Plankton"
-  swatch_legend: # eDNA swatch legends, in font-size units (em) unless stated
+  swatch_legend:
+    # eDNA swatch legends, in font-size units (em) unless stated
     handlelength: 1.2 # swatch width
     handleheight: 1.0 # swatch height
     columnspacing: 1.0 # gap between entries
     borderpad: 0.2 # padding inside the legend box
     edge_color: "white" # outline of each swatch
     edge_width: 0.6 # outline width, points
-  line_legend: # species-line key in the landings panel, in font-size units (em)
+  line_legend:
+    # species-line key in the landings panel, in font-size units (em)
     handlelength: 1.8 # line swatch length
     columnspacing: 1.8 # gap between entries
-  style: # matplotlib rcParams overriding the shared paper style
+  style:
+    # matplotlib rcParams overriding the shared paper style
     font.size: 9 # base size: tick labels, axis labels, points
 
   panels:
@@ -280,7 +286,8 @@ plot:
       # stay visually separate. Within each family the groups alternate dark ->
       # light so neighbouring segments in a stacked bar differ in lightness as well
       # as hue. "Other" is the only neutral.
-      colors: # fill colour per group
+      colors:
+        # fill colour per group
         # fish
         Atlantic cod: "#245982"
         Greenland halibut: "#1785cf"
@@ -298,4 +305,4 @@ plot:
 
 output:
   formats: [ png, pdf ] # file formats written as fig_FISH.<fmt>
-  dpi: 300 # resolution of raster outputs, dots per inch
+  dpi: 150 # resolution of raster outputs, dots per inch

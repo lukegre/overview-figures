@@ -82,7 +82,9 @@ plot:
     line_width: 1 # pt
     band_color: "0.6" # grey level of the confidence band
     band_alpha: 0.4
-    stats_text: "R-squared: {r2:.3f}\nP-value: {pval:.3f}" # R² and p-value of the slope
+    stats_text: "R-squared: {r2:.3f}
+
+      P-value: {pval:.3f}" # R² and p-value of the slope
     stats_fontsize: "medium"
     stats_box_alpha: 0.75 # opacity of the white box behind the stats
   panels:
@@ -157,4 +159,4 @@ plot:
 
 output:
   formats: [ png ] # figure file formats (pdf would work too)
-  dpi: 300 # resolution of raster formats, dots per inch
+  dpi: 150 # resolution of raster formats, dots per inch

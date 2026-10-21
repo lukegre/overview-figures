@@ -96,7 +96,6 @@ analysis:
   - key: biodiversity
     cluster: Biodiversity
     merge_dist_m: 5000 # metres
-
   # ---------------------------------------------------------------------------
   # Manual edits to the sampling locations, applied after the merging above.
   # Both of these were requested by Lisa Bröder (email thread from Julia,
@@ -240,7 +239,6 @@ plot:
   - { text: Qaqortoq, lonlat: [ -46.068453, 60.743331 ] }
   - { text: Qassiarsuk, lonlat: [ -45.51705, 61.110994 ] }
   - { text: Igaliku, lonlat: [ -45.387133, 61.010000 ] }
-
   # ---------------------------------------------------------------------------
   # The diffuse pink blob around Narsaq: the aerosol source region, which has no
   # hard boundary. Built from `n_rings` nested ellipses of increasing size, each
@@ -313,7 +311,8 @@ plot:
       color: "k"
       line_width: 0.3 # points
       alpha: 0.7
-    extent_box: # red box marking the main map's extent
+    extent_box:
+      # red box marking the main map's extent
       edge_color: "r"
       line_width: 1 # points
     places:
@@ -350,4 +349,4 @@ plot:
 
 output:
   formats: [ png, pdf ] # figure file formats
-  dpi: 300 # resolution of raster formats, dots per inch
+  dpi: 150 # resolution of raster formats, dots per inch

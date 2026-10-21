@@ -43,4 +43,4 @@ plot:
 
 output:
   formats: [ "png" ] # figure file formats
-  dpi: 300 # resolution of raster formats, dots per inch
+  dpi: 150 # resolution of raster formats, dots per inch
